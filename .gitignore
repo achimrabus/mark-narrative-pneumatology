@@ -1,0 +1,30 @@
+# API keys and sensitive configuration
+config.js
+api-keys.txt
+.env
+.env.local
+
+# Research proposal files (contain personal information)
+rueggemeier_*.txt
+*.txt
+
+# Development files
+proxy-server.js
+config.template.js
+*.log
+.DS_Store
+Thumbs.db
+
+# Node modules (if using npm)
+node_modules/
+package-lock.json
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp

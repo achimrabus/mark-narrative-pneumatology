@@ -1,0 +1,38 @@
+{
+  "name": "mark-narrative-pneumatology",
+  "version": "1.0.0",
+  "description": "Digital humanities web application for narratological investigation of the Holy Spirit in Mark's Gospel",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000",
+    "build": "echo 'No build process needed - static files ready for deployment'",
+    "deploy": "echo 'Deploy to GitHub Pages using gh-pages branch'"
+  },
+  "keywords": [
+    "digital-humanities",
+    "narratology",
+    "biblical-studies",
+    "new-testament",
+    "mark",
+    "holy-spirit",
+    "visualization",
+    "text-analysis"
+  ],
+  "author": "Achim Rüggemeier",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/achimrabus/mark-narrative-pneumatology.git"
+  },
+  "homepage": "https://achimrabus.github.io/mark-narrative-pneumatology",
+  "dependencies": {
+    "d3": "^7.8.5"
+  },
+  "devDependencies": {},
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

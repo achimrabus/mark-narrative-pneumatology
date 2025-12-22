@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark's Narrative Pneumatology - Digital Humanities Tool</title>
+    <meta name="description" content="Interactive investigation of the Holy Spirit as a background character in Mark's Gospel">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/visualizations.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Source+Serif+Pro:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <h1>Mark's Narrative Pneumatology</h1>
+            <p class="subtitle">Investigating the Holy Spirit as a Background Character</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav>
+        <ul class="nav-menu">
+            <li><button class="nav-btn active" data-view="network">Character Network</button></li>
+            <li><button class="nav-btn" data-view="flow">Narrative Flow</button></li>
+            <li><button class="nav-btn" data-view="text">Text Viewer</button></li>
+            <li><button class="nav-btn" data-view="about">About</button></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading text data...</p>
+        </div>
+
+        <!-- Character Network View -->
+        <section id="network-view" class="view-container active">
+            <div class="visualization-container">
+                <h2>Character Network Graph</h2>
+                <p>Interactive visualization of character relationships in Mark's Gospel. The Holy Spirit is shown with special highlighting to indicate its role as a background character.</p>
+                
+                <!-- Controls -->
+                <div class="controls">
+                    <div class="filter-group">
+                        <label for="character-filter">Filter by character:</label>
+                        <select id="character-filter" multiple>
+                            <option value="all" selected>All Characters</option>
+                            <option value="spirit">Holy Spirit</option>
+                            <option value="human">Human Characters</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="chapter-filter">Filter by chapter:</label>
+                        <select id="chapter-filter">
+                            <option value="all" selected>All Chapters</option>
+                        </select>
+                    </div>
+                    <button id="reset-network" class="btn btn-secondary">Reset View</button>
+                </div>
+                
+                <!-- Network Graph Container -->
+                <div id="network-graph" class="graph-container"></div>
+            </div>
+        </section>
+
+        <!-- Narrative Flow View -->
+        <section id="flow-view" class="view-container">
+            <div class="visualization-container">
+                <h2>Narrative Flow Timeline</h2>
+                <p>Chapter-by-chapter visualization of Mark's Gospel with attentional cues and Spirit references highlighted.</p>
+                
+                <!-- Controls -->
+                <div class="controls">
+                    <div class="cue-toggles">
+                        <label><input type="checkbox" id="toggle-primacy" checked> Primacy Effect</label>
+                        <label><input type="checkbox" id="toggle-causal" checked> Causal Implication</label>
+                        <label><input type="checkbox" id="toggle-focalization" checked> Focalization Shift</label>
+                        <label><input type="checkbox" id="toggle-absence" checked> Conspicuous Absence</label>
+                        <label><input type="checkbox" id="toggle-prolepsis" checked> Prolepsis</label>
+                    </div>
+                    <div class="zoom-controls">
+                        <button id="zoom-in" class="btn btn-icon">+</button>
+                        <button id="zoom-out" class="btn btn-icon">-</button>
+                        <button id="zoom-reset" class="btn btn-icon">⟲</button>
+                    </div>
+                </div>
+                
+                <!-- Timeline Container -->
+                <div id="narrative-flow" class="timeline-container"></div>
+            </div>
+        </section>
+
+        <!-- Text Viewer View -->
+        <section id="text-view" class="view-container">
+            <div class="visualization-container">
+                <h2>Interactive Text Viewer</h2>
+                <p>Greek text of Mark's Gospel with AI-detected attentional cues and annotation tools.</p>
+                
+                <!-- Text Viewer Container -->
+                <div id="text-viewer" class="text-viewer-container">
+                    <div class="text-controls">
+                        <div class="navigation-controls">
+                            <button id="prev-segment" class="btn btn-secondary">← Previous</button>
+                            <span id="segment-info">Mark 1:1-15</span>
+                            <button id="next-segment" class="btn btn-secondary">Next →</button>
+                        </div>
+                        <div class="view-options">
+                            <button id="toggle-greek" class="btn btn-secondary">Show Greek</button>
+                            <button id="toggle-annotations" class="btn btn-secondary">Show Annotations</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-content-area">
+                        <div id="greek-text" class="text-panel"></div>
+                        <div id="annotation-panel" class="annotation-panel"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About View -->
+        <section id="about-view" class="view-container">
+            <div class="visualization-container">
+                <h2>About This Project</h2>
+                <div class="about-content">
+                    <h3>Research Context</h3>
+                    <p>This application supports Project B05 "Mark's Narrative Pneumatology" from the Collaborative Research Centre on "Narrating Ideas: Ideational Narratives in Cultural Transfers."</p>
+                    
+                    <h3>Methodology</h3>
+                    <p>The investigation combines narratological analysis with cognitive science to understand how Mark constructs the Holy Spirit as a background character through attentional cues rather than explicit representation.</p>
+                    
+                    <h3>Attentional Cues</h3>
+                    <ul>
+                        <li><strong>Primacy Effect:</strong> Early mentions that establish character importance</li>
+                        <li><strong>Causal Implication:</strong> Events attributed to off-stage characters</li>
+                        <li><strong>Focalization Shifts:</strong> Changes in narrative perspective</li>
+                        <li><strong>Conspicuous Absence:</strong> Notable omissions or gaps</li>
+                        <li><strong>Prolepsis:</strong> Forward references anticipating character action</li>
+                    </ul>
+                    
+                    <h3>Technical Implementation</h3>
+                    <p>Built with vanilla JavaScript and D3.js for visualizations. Uses AI-powered analysis to identify narrative patterns in the Greek text.</p>
+                    
+                    <h3>Credits</h3>
+                    <p>Developed for the Collaborative Research Centre, University of Bonn.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2023 Collaborative Research Centre on "Narrating Ideas". University of Bonn.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+    <script src="js/utils/constants.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/data/conll-parser.js"></script>
+    <script src="js/data/character-mapper.js"></script>
+    <script src="js/analysis/cue-detector.js"></script>
+    <script src="js/analysis/api-client.js"></script>
+    <script src="js/visualizations/network-graph.js"></script>
+    <script src="js/visualizations/narrative-flow.js"></script>
+    <script src="js/visualizations/text-viewer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
