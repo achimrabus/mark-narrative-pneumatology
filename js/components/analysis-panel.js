@@ -166,11 +166,33 @@ class AnalysisPanel {
         try {
             this.showLoading(true);
 
-            // Get chapter text
-            const chapterText = conllParser.getTextRange(this.currentChapter, 1, 50);
+            // Get chapter text - try multiple approaches
+            let chapterText = conllParser.getTextRange(this.currentChapter, 1, 50);
             
-            if (!chapterText) {
-                throw new Error('No text available for this chapter');
+            // If no text from range, try to get any available text
+            if (!chapterText || chapterText.trim() === '') {
+                // Try to get text from the first few sentences of the chapter
+                if (conllParser.data && conllParser.data.sentences) {
+                    const chapterSentences = conllParser.data.sentences.filter(s => s.chapter === this.currentChapter);
+                    if (chapterSentences.length > 0) {
+                        chapterText = chapterSentences.slice(0, 10).map(s =>
+                            s.tokens.map(t => t.form).join(' ')
+                        ).join(' ');
+                    }
+                }
+                
+                // If still no text, try to get any text at all
+                if (!chapterText || chapterText.trim() === '') {
+                    if (conllParser.data && conllParser.data.sentences && conllParser.data.sentences.length > 0) {
+                        chapterText = conllParser.data.sentences.slice(0, 20).map(s =>
+                            s.tokens.map(t => t.form).join(' ')
+                        ).join(' ');
+                    }
+                }
+            }
+            
+            if (!chapterText || chapterText.trim() === '') {
+                throw new Error('No text available for analysis. Please check if the CONLL data is properly loaded.');
             }
 
             // Run different types of analysis
@@ -240,11 +262,41 @@ class AnalysisPanel {
         try {
             // Create segments for pattern analysis
             const segments = [];
-            for (const verse in conllParser.chapters[this.currentChapter]) {
-                const verseText = conllParser.getTextRange(this.currentChapter, parseInt(verse), parseInt(verse));
+            
+            // Try to get verse-level segments if chapter data exists
+            if (conllParser.chapters && conllParser.chapters[this.currentChapter]) {
+                for (const verse in conllParser.chapters[this.currentChapter]) {
+                    const verseText = conllParser.getTextRange(this.currentChapter, parseInt(verse), parseInt(verse));
+                    if (verseText && verseText.trim() !== '') {
+                        segments.push({
+                            verse: parseInt(verse),
+                            text: verseText
+                        });
+                    }
+                }
+            }
+            
+            // If no verse segments, create sentence-level segments
+            if (segments.length === 0 && conllParser.data && conllParser.data.sentences) {
+                const chapterSentences = conllParser.data.sentences.filter(s => s.chapter === this.currentChapter);
+                if (chapterSentences.length > 0) {
+                    chapterSentences.forEach((sentence, index) => {
+                        const sentenceText = sentence.tokens.map(t => t.form).join(' ');
+                        if (sentenceText && sentenceText.trim() !== '') {
+                            segments.push({
+                                verse: index + 1, // Use sentence index as verse number
+                                text: sentenceText
+                            });
+                        }
+                    });
+                }
+            }
+            
+            // If still no segments, use the whole text as one segment
+            if (segments.length === 0 && text) {
                 segments.push({
-                    verse: parseInt(verse),
-                    text: verseText
+                    verse: 1,
+                    text: text
                 });
             }
 

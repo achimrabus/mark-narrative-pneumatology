@@ -22,9 +22,11 @@ class CONLLParser {
         const sentences = [];
         let currentSentence = [];
         let sentenceId = 0;
-        let currentBook = null;
-        let currentChapter = null;
-        let currentVerse = null;
+        let currentBook = 'Mark'; // Default to Mark
+        let currentChapter = 1;
+        let currentVerse = 1;
+        let sentencesInCurrentChapter = 0;
+        const MAX_SENTENCES_PER_CHAPTER = 50; // Approximate sentences per chapter
 
         for (const line of lines) {
             const trimmed = line.trim();
@@ -40,6 +42,16 @@ class CONLLParser {
                         verse: currentVerse
                     });
                     currentSentence = [];
+                    sentencesInCurrentChapter++;
+                    
+                    // Auto-advance chapter if we've reached the limit
+                    if (sentencesInCurrentChapter >= MAX_SENTENCES_PER_CHAPTER) {
+                        currentChapter++;
+                        currentVerse = 1;
+                        sentencesInCurrentChapter = 0;
+                    } else {
+                        currentVerse++;
+                    }
                 }
                 continue;
             }
@@ -125,6 +137,14 @@ class CONLLParser {
             }
 
             this.chapters[chapter][verse].push(sentence);
+        }
+        
+        // Log chapter organization for debugging
+        console.log('Organized sentences by chapters:', Object.keys(this.chapters).length, 'chapters');
+        for (const chapter in this.chapters) {
+            const verseCount = Object.keys(this.chapters[chapter]).length;
+            const sentenceCount = Object.values(this.chapters[chapter]).reduce((sum, verses) => sum + verses.length, 0);
+            console.log(`Chapter ${chapter}: ${verseCount} verses, ${sentenceCount} sentences`);
         }
     }
 

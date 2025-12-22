@@ -292,8 +292,33 @@ class NarratologyApp {
         try {
             this.showLoading('Running narratological analysis...');
             
-            // Get current chapter text
-            const chapterText = conllParser.getTextRange(this.currentChapter, 1, 50);
+            // Get current chapter text - try multiple approaches
+            let chapterText = conllParser.getTextRange(this.currentChapter, 1, 50);
+            
+            // If no text from range, try to get any available text
+            if (!chapterText || chapterText.trim() === '') {
+                if (conllParser.data && conllParser.data.sentences) {
+                    const chapterSentences = conllParser.data.sentences.filter(s => s.chapter === this.currentChapter);
+                    if (chapterSentences.length > 0) {
+                        chapterText = chapterSentences.slice(0, 10).map(s =>
+                            s.tokens.map(t => t.form).join(' ')
+                        ).join(' ');
+                    }
+                }
+                
+                // If still no text, try to get any text at all
+                if (!chapterText || chapterText.trim() === '') {
+                    if (conllParser.data && conllParser.data.sentences && conllParser.data.sentences.length > 0) {
+                        chapterText = conllParser.data.sentences.slice(0, 20).map(s =>
+                            s.tokens.map(t => t.form).join(' ')
+                        ).join(' ');
+                    }
+                }
+            }
+            
+            if (!chapterText || chapterText.trim() === '') {
+                throw new Error('No text available for analysis. Please check if the CONLL data is properly loaded.');
+            }
             
             // Run AI analysis
             const cues = await apiClient.detectCues(chapterText);
