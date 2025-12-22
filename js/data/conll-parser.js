@@ -22,11 +22,9 @@ class CONLLParser {
         const sentences = [];
         let currentSentence = [];
         let sentenceId = 0;
-        let currentBook = 'Mark'; // Default to Mark
-        let currentChapter = 1;
-        let currentVerse = 1;
-        let sentencesInCurrentChapter = 0;
-        const MAX_SENTENCES_PER_CHAPTER = 50; // Approximate sentences per chapter
+        let currentBook = null;
+        let currentChapter = null;
+        let currentVerse = null;
 
         for (const line of lines) {
             const trimmed = line.trim();
@@ -42,16 +40,6 @@ class CONLLParser {
                         verse: currentVerse
                     });
                     currentSentence = [];
-                    sentencesInCurrentChapter++;
-                    
-                    // Auto-advance chapter if we've reached the limit
-                    if (sentencesInCurrentChapter >= MAX_SENTENCES_PER_CHAPTER) {
-                        currentChapter++;
-                        currentVerse = 1;
-                        sentencesInCurrentChapter = 0;
-                    } else {
-                        currentVerse++;
-                    }
                 }
                 continue;
             }
