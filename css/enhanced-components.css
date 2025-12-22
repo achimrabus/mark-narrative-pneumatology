@@ -1,0 +1,418 @@
+/* Enhanced Search and Greek Keyboard Styles */
+
+/* Enhanced Search */
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+#enhanced-search {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+#enhanced-search:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.search-controls {
+    display: flex;
+    gap: 4px;
+    margin-left: 8px;
+}
+
+.search-controls button {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.search-controls button:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.search-options {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-top: 4px;
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+}
+
+.search-options label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.search-options input[type="checkbox"] {
+    margin: 0;
+}
+
+.search-results {
+    margin-top: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: white;
+}
+
+.results-summary {
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.search-result {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f3f4;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.search-result:hover {
+    background: #f8f9fa;
+}
+
+.search-result:last-child {
+    border-bottom: none;
+}
+
+.search-result.exact {
+    border-left: 3px solid #28a745;
+}
+
+.search-result.fuzzy {
+    border-left: 3px solid #ffc107;
+}
+
+.search-result.wildcard {
+    border-left: 3px solid #17a2b8;
+}
+
+.search-result.latin {
+    border-left: 3px solid #6f42c1;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.result-text {
+    font-weight: 500;
+    font-family: 'Gentium Plus', 'Noto Serif', serif;
+}
+
+.result-meta {
+    font-size: 11px;
+    color: #6c757d;
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.result-details {
+    font-size: 12px;
+    color: #6c757d;
+    line-height: 1.3;
+}
+
+.no-results, .search-error {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.search-error {
+    color: #dc3545;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.search-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-top: 8px;
+}
+
+.search-navigation button {
+    padding: 4px 8px;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.search-navigation button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#result-counter {
+    font-size: 13px;
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Greek Keyboard */
+.greek-keyboard {
+    position: fixed;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    font-family: 'Gentium Plus', 'Noto Serif', serif;
+    max-width: 600px;
+}
+
+.keyboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 8px 8px 0 0;
+}
+
+.keyboard-title {
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.keyboard-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.keyboard-close:hover {
+    background: #e9ecef;
+}
+
+.keyboard-modifiers {
+    display: flex;
+    gap: 16px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 12px;
+}
+
+.keyboard-modifiers label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.keyboard-modifiers input[type="checkbox"] {
+    margin: 0;
+}
+
+.keyboard-row {
+    display: flex;
+    padding: 4px;
+    gap: 4px;
+}
+
+.keyboard-key {
+    flex: 1;
+    min-height: 40px;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Gentium Plus', 'Noto Serif', serif;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.keyboard-key:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.keyboard-key:active {
+    background: #e9ecef;
+    transform: translateY(1px);
+}
+
+.key-main, .key-shift, .key-alt {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.key-main {
+    font-weight: 500;
+}
+
+.key-shift, .key-alt {
+    color: #6c757d;
+    font-size: 10px;
+}
+
+.key-shift {
+    display: none;
+}
+
+.key-alt {
+    display: none;
+}
+
+.keyboard-key.space {
+    flex: 2;
+    min-width: 100px;
+}
+
+.keyboard-key.backspace, .keyboard-key.clear {
+    background: #f8f9fa;
+    font-size: 12px;
+    color: #495057;
+}
+
+.greek-keyboard-trigger {
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.greek-keyboard-trigger:hover {
+    opacity: 1;
+}
+
+.input-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.greek-keyboard-active {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Search highlight in text */
+.search-highlight {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 2px;
+    padding: 1px 2px;
+    animation: pulse-highlight 1s ease-in-out;
+}
+
+@keyframes pulse-highlight {
+    0% { background: #ffeaa7; }
+    50% { background: #fff3cd; }
+    100% { background: #fff3cd; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .greek-keyboard {
+        max-width: 95vw;
+        bottom: 10px !important;
+        left: 50% !important;
+        transform: translateX(-50%);
+    }
+    
+    .keyboard-row {
+        gap: 2px;
+    }
+    
+    .keyboard-key {
+        min-height: 35px;
+        font-size: 12px;
+    }
+    
+    .search-options {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .search-controls {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .greek-keyboard {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .keyboard-header, .keyboard-modifiers {
+        background: #4a5568;
+        border-color: #718096;
+    }
+    
+    .keyboard-key {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .keyboard-key:hover {
+        background: #4a5568;
+        border-color: #718096;
+    }
+    
+    .search-results {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .results-summary {
+        background: #4a5568;
+        border-color: #718096;
+    }
+    
+    .search-result:hover {
+        background: #4a5568;
+    }
+}
