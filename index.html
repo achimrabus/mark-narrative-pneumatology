@@ -10,12 +10,10 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/visualizations.css">
+    <link rel="stylesheet" href="css/enhanced-components.css">
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Source+Serif+Pro:wght@400;600&display=swap" rel="stylesheet">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Source+Serif+Pro:wght@400;600&family=Gentium+Plus:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Header -->
@@ -24,24 +22,43 @@
             <h1>Mark's Narrative Pneumatology</h1>
             <p class="subtitle">Investigating the Holy Spirit as a Background Character</p>
         </div>
+        <div class="header-controls">
+            <div class="status-indicator" id="api-status">
+                <span class="status-dot"></span>
+                <span class="status-text">API Status</span>
+            </div>
+            <button id="api-key-btn" class="btn btn-secondary">API Setup</button>
+        </div>
     </header>
 
     <!-- Navigation -->
     <nav>
+        <div class="nav-controls">
+            <div class="chapter-selector">
+                <label for="chapter-selector">Chapter:</label>
+                <select id="chapter-selector">
+                    <option value="1" selected>Chapter 1</option>
+                </select>
+            </div>
+            <div class="view-controls">
+                <button id="analyze-btn" class="btn btn-primary">Run Analysis</button>
+                <button id="export-btn" class="btn btn-secondary">Export Data</button>
+            </div>
+        </div>
         <ul class="nav-menu">
             <li><button class="nav-btn active" data-view="network">Character Network</button></li>
-            <li><button class="nav-btn" data-view="flow">Narrative Flow</button></li>
+            <li><button class="nav-btn" data-view="timeline">Narrative Flow</button></li>
             <li><button class="nav-btn" data-view="text">Text Viewer</button></li>
-            <li><button class="nav-btn" data-view="about">About</button></li>
+            <li><button class="nav-btn" data-view="analysis">Analysis</button></li>
         </ul>
     </nav>
 
     <!-- Main Content -->
     <main>
         <!-- Loading Indicator -->
-        <div id="loading" class="loading">
+        <div id="loader" class="loading" style="display: none;">
             <div class="loading-spinner"></div>
-            <p>Loading text data...</p>
+            <p class="loader-text">Loading application...</p>
         </div>
 
         <!-- Character Network View -->
@@ -54,16 +71,11 @@
                 <div class="controls">
                     <div class="filter-group">
                         <label for="character-filter">Filter by character:</label>
-                        <select id="character-filter" multiple>
+                        <select id="character-filter">
                             <option value="all" selected>All Characters</option>
                             <option value="spirit">Holy Spirit</option>
-                            <option value="human">Human Characters</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="chapter-filter">Filter by chapter:</label>
-                        <select id="chapter-filter">
-                            <option value="all" selected>All Chapters</option>
+                            <option value="jesus">Jesus</option>
+                            <option value="disciples">Disciples</option>
                         </select>
                     </div>
                     <button id="reset-network" class="btn btn-secondary">Reset View</button>
@@ -75,7 +87,7 @@
         </section>
 
         <!-- Narrative Flow View -->
-        <section id="flow-view" class="view-container">
+        <section id="timeline-view" class="view-container">
             <div class="visualization-container">
                 <h2>Narrative Flow Timeline</h2>
                 <p>Chapter-by-chapter visualization of Mark's Gospel with attentional cues and Spirit references highlighted.</p>
@@ -88,11 +100,6 @@
                         <label><input type="checkbox" id="toggle-focalization" checked> Focalization Shift</label>
                         <label><input type="checkbox" id="toggle-absence" checked> Conspicuous Absence</label>
                         <label><input type="checkbox" id="toggle-prolepsis" checked> Prolepsis</label>
-                    </div>
-                    <div class="zoom-controls">
-                        <button id="zoom-in" class="btn btn-icon">+</button>
-                        <button id="zoom-out" class="btn btn-icon">-</button>
-                        <button id="zoom-reset" class="btn btn-icon">⟲</button>
                     </div>
                 </div>
                 
@@ -109,51 +116,20 @@
                 
                 <!-- Text Viewer Container -->
                 <div id="text-viewer" class="text-viewer-container">
-                    <div class="text-controls">
-                        <div class="navigation-controls">
-                            <button id="prev-segment" class="btn btn-secondary">← Previous</button>
-                            <span id="segment-info">Mark 1:1-15</span>
-                            <button id="next-segment" class="btn btn-secondary">Next →</button>
-                        </div>
-                        <div class="view-options">
-                            <button id="toggle-greek" class="btn btn-secondary">Show Greek</button>
-                            <button id="toggle-annotations" class="btn btn-secondary">Show Annotations</button>
-                        </div>
-                    </div>
-                    
-                    <div class="text-content-area">
-                        <div id="greek-text" class="text-panel"></div>
-                        <div id="annotation-panel" class="annotation-panel"></div>
-                    </div>
+                    <!-- Content will be generated by JavaScript -->
                 </div>
             </div>
         </section>
 
-        <!-- About View -->
-        <section id="about-view" class="view-container">
+        <!-- Analysis View -->
+        <section id="analysis-view" class="view-container">
             <div class="visualization-container">
-                <h2>About This Project</h2>
-                <div class="about-content">
-                    <h3>Research Context</h3>
-                    <p>This application supports Project B05 "Mark's Narrative Pneumatology" from the Collaborative Research Centre on "Narrating Ideas: Ideational Narratives in Cultural Transfers."</p>
-                    
-                    <h3>Methodology</h3>
-                    <p>The investigation combines narratological analysis with cognitive science to understand how Mark constructs the Holy Spirit as a background character through attentional cues rather than explicit representation.</p>
-                    
-                    <h3>Attentional Cues</h3>
-                    <ul>
-                        <li><strong>Primacy Effect:</strong> Early mentions that establish character importance</li>
-                        <li><strong>Causal Implication:</strong> Events attributed to off-stage characters</li>
-                        <li><strong>Focalization Shifts:</strong> Changes in narrative perspective</li>
-                        <li><strong>Conspicuous Absence:</strong> Notable omissions or gaps</li>
-                        <li><strong>Prolepsis:</strong> Forward references anticipating character action</li>
-                    </ul>
-                    
-                    <h3>Technical Implementation</h3>
-                    <p>Built with vanilla JavaScript and D3.js for visualizations. Uses AI-powered analysis to identify narrative patterns in the Greek text.</p>
-                    
-                    <h3>Credits</h3>
-                    <p>Developed for the Collaborative Research Centre, University of Bonn.</p>
+                <h2>AI-Powered Analysis</h2>
+                <p>Automated detection of attentional cues and narrative patterns using advanced text analysis.</p>
+                
+                <!-- Analysis Container -->
+                <div id="analysis-panel" class="analysis-container">
+                    <!-- Content will be generated by JavaScript -->
                 </div>
             </div>
         </section>
@@ -161,21 +137,34 @@
 
     <!-- Footer -->
     <footer>
-        <p>&copy; 2023 Collaborative Research Centre on "Narrating Ideas". University of Bonn.</p>
+        <p>&copy; 2024 Collaborative Research Centre on "Narrating Ideas". University of Bonn.</p>
+        <p>Digital Humanities tool for narratological analysis of Mark's Gospel</p>
     </footer>
 
     <!-- Scripts -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+    <script src="https://unpkg.com/fuse.js@6.6.2"></script>
+    
+    <!-- Core Utilities -->
     <script src="js/utils/constants.js"></script>
     <script src="js/utils/helpers.js"></script>
+    <script src="js/utils/api-client.js"></script>
+    
+    <!-- Data Processing -->
     <script src="js/data/conll-parser.js"></script>
-    <script src="js/data/character-mapper.js"></script>
-    <script src="js/analysis/cue-detector.js"></script>
-    <script src="js/analysis/api-client.js"></script>
-    <script src="js/visualizations/network-graph.js"></script>
-    <script src="js/visualizations/narrative-flow.js"></script>
-    <script src="js/visualizations/text-viewer.js"></script>
+    
+    <!-- Enhanced Components -->
+    <script src="js/components/enhanced-search.js"></script>
+    <script src="js/components/search-integration.js"></script>
+    <script src="js/components/greek-keyboard.js"></script>
+    
+    <!-- Visualization Components -->
+    <script src="js/components/network-visualization.js"></script>
+    <script src="js/components/timeline-visualization.js"></script>
+    <script src="js/components/text-viewer.js"></script>
+    <script src="js/components/analysis-panel.js"></script>
+    
+    <!-- Main Application -->
     <script src="js/app.js"></script>
 </body>
 </html>
