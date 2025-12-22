@@ -55,7 +55,7 @@ const API_ENDPOINTS = {
 
 // File paths
 const FILE_PATHS = {
-    CONLL: 'data/greek-nt.conll',
+    CONLL: 'mark_complete.conllu',
     CHARACTERS: 'data/processed/characters.json',
     SEGMENTS: 'data/processed/segments.json',
     CUES: 'data/processed/cues.json'

@@ -1,5 +1,5 @@
-// CONLL File Parser for Greek New Testament data
-// Processes the greek-nt.conll file for narratological analysis
+// CONLL File Parser for Ancient Greek Gospel of Mark (PROIEL)
+// Processes the mark_complete.conllu file for narratological analysis
 
 /**
  * CONLL Parser for processing Greek New Testament linguistic data
@@ -22,24 +22,43 @@ class CONLLParser {
         const sentences = [];
         let currentSentence = [];
         let sentenceId = 0;
-        let currentBook = null;
+        let currentBook = 'Mark';
         let currentChapter = null;
         let currentVerse = null;
+        let currentSentenceText = null;
 
         for (const line of lines) {
             const trimmed = line.trim();
-            
-            // Skip empty lines and comments
-            if (!trimmed || trimmed.startsWith('#')) {
+
+            // Parse comment lines for metadata
+            if (trimmed.startsWith('#')) {
+                // Extract chapter from source line: "# source = The Greek New Testament, Mark 5"
+                if (trimmed.startsWith('# source =')) {
+                    const sourceMatch = trimmed.match(/Mark\s+(\d+)/);
+                    if (sourceMatch) {
+                        currentChapter = parseInt(sourceMatch[1]);
+                    }
+                }
+                // Extract sentence text
+                if (trimmed.startsWith('# text =')) {
+                    currentSentenceText = trimmed.substring(8).trim();
+                }
+                continue;
+            }
+
+            // Skip empty lines
+            if (!trimmed) {
                 if (currentSentence.length > 0) {
                     sentences.push({
                         id: sentenceId++,
                         tokens: currentSentence,
                         book: currentBook,
                         chapter: currentChapter,
-                        verse: currentVerse
+                        verse: currentVerse,
+                        text: currentSentenceText
                     });
                     currentSentence = [];
+                    currentSentenceText = null;
                 }
                 continue;
             }
@@ -61,18 +80,19 @@ class CONLLParser {
                 misc: fields[9]         // Miscellaneous information
             };
 
-            // Extract book, chapter, verse from misc field if available
-            if (token.misc && token.misc.includes('book=')) {
-                const bookMatch = token.misc.match(/book=([^|]+)/);
-                if (bookMatch) currentBook = bookMatch[1];
-            }
-            if (token.misc && token.misc.includes('chapter=')) {
-                const chapterMatch = token.misc.match(/chapter=([^|]+)/);
-                if (chapterMatch) currentChapter = parseInt(chapterMatch[1]);
-            }
-            if (token.misc && token.misc.includes('verse=')) {
-                const verseMatch = token.misc.match(/verse=([^|]+)/);
-                if (verseMatch) currentVerse = parseInt(verseMatch[1]);
+            // Extract chapter and verse from Ref field: "Ref=MARK_5.1"
+            if (token.misc && token.misc.includes('Ref=MARK_')) {
+                const refMatch = token.misc.match(/Ref=MARK_(\d+)\.(\d+)/);
+                if (refMatch) {
+                    const chapterFromRef = parseInt(refMatch[1]);
+                    const verseFromRef = parseInt(refMatch[2]);
+
+                    // Update current chapter/verse (use first token's reference)
+                    if (currentSentence.length === 0) {
+                        currentChapter = chapterFromRef;
+                        currentVerse = verseFromRef;
+                    }
+                }
             }
 
             currentSentence.push(token);
@@ -85,13 +105,14 @@ class CONLLParser {
                 tokens: currentSentence,
                 book: currentBook,
                 chapter: currentChapter,
-                verse: currentVerse
+                verse: currentVerse,
+                text: currentSentenceText
             });
         }
 
         this.data = {
             sentences,
-            book: currentBook || 'Mark',
+            book: currentBook,
             totalSentences: sentenceId
         };
 

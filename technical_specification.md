@@ -122,8 +122,8 @@ mark-narrative-app/
 │   └── utils/
 │       ├── helpers.js
 │       └── constants.js
+├── mark_complete.conllu      # Gospel of Mark CONLL-U data (PROIEL)
 ├── data/
-│   ├── greek-nt.conll
 │   └── processed/
 │       ├── characters.json
 │       ├── segments.json

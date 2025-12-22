@@ -140,8 +140,7 @@ mark-narrative-pneumatology/
 │       ├── timeline-visualization.js   # Narrative flow timeline
 │       ├── text-viewer.js              # Interactive text display
 │       └── analysis-panel.js           # AI analysis results
-├── data/
-│   └── greek-nt.conll        # Greek New Testament CONLL data
+├── mark_complete.conllu      # Gospel of Mark CONLL-U data (PROIEL)
 ├── docs/                     # Documentation files
 ├── config.template.js        # API configuration template
 └── README.md                 # This file

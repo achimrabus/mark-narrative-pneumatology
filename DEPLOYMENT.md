@@ -46,8 +46,7 @@ The deployment includes:
 - `index.html` - Main application
 - `css/` - Stylesheets
 - `js/` - JavaScript modules
-- `data/` - CONLL data file
-- `greek-nt.conll` - Greek New Testament data
+- `mark_complete.conllu` - Gospel of Mark CONLL-U data (PROIEL)
 
 ### What's NOT Deployed
 
@@ -65,7 +64,7 @@ Development-only files are excluded:
 - Ensure your repository is public
 
 **404 errors?**
-- Make sure `greek-nt.conll` is in the repository
+- Make sure `mark_complete.conllu` is in the repository
 - Check file paths in browser console (F12)
 
 **API not working?**

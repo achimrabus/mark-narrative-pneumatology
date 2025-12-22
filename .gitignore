@@ -31,3 +31,9 @@ package-lock.json
 # Temporary files
 *.tmp
 *.temp
+
+# Test files
+test-parser.js
+
+# Old data files
+greek-nt.conll

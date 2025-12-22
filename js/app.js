@@ -52,12 +52,12 @@ class NarratologyApp {
      */
     async loadData() {
         try {
-            this.showLoading('Loading Greek New Testament data...');
-            this.data = await conllParser.loadFromFile('./greek-nt.conll');
+            this.showLoading('Loading Gospel of Mark data...');
+            this.data = await conllParser.loadFromFile('./mark_complete.conllu');
             console.log('Data loaded:', this.data);
         } catch (error) {
             console.error('Error loading data:', error);
-            throw new Error('Failed to load CONLL data. Please ensure greek-nt.conll file is available.');
+            throw new Error('Failed to load CONLL data. Please ensure mark_complete.conllu file is available.');
         }
     }
 

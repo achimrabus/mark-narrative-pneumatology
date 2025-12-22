@@ -3,7 +3,7 @@
 ```mermaid
 graph TB
     subgraph "Data Layer"
-        CONLL[greek-nt.conll<br/>Greek NT Text]
+        CONLL[mark_complete.conllu<br/>Gospel of Mark (PROIEL)]
         Parser[CONLL Parser]
         Characters[Character Mapping]
         Segments[Narrative Segments]
