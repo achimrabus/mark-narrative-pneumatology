@@ -6,8 +6,7 @@
   "scripts": {
     "start": "python -m http.server 8000",
     "dev": "python -m http.server 8000",
-    "build": "echo 'No build process needed - static files ready for deployment'",
-    "deploy": "echo 'Deploy to GitHub Pages using gh-pages branch'"
+    "build": "echo 'No build process needed - static files ready for deployment'"
   },
   "keywords": [
     "digital-humanities",
