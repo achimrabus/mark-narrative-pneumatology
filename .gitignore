@@ -8,6 +8,9 @@ api-keys.txt
 rueggemeier_*.txt
 *.txt
 
+# API testing files (may contain sensitive data)
+test-api-cmd.json
+
 # Development files
 proxy-server.js
 config.template.js

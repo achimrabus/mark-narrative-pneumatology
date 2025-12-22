@@ -9,7 +9,7 @@ class APIClient {
     constructor() {
         // API configuration
         this.config = {
-            endpoint: 'https://openwebui.uni-freiburg.de/api',
+            endpoint: 'https://openwebui.uni-freiburg.de/api/v1/chat/completions',
             model: 'glm-4.6-llmlb'
         };
         
@@ -74,7 +74,7 @@ class APIClient {
         };
 
         try {
-            const response = await fetch(this.config.endpoint + '/chat/completions', {
+            const response = await fetch(this.config.endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
