@@ -536,3 +536,78 @@
     font-weight: 600;
 }
 
+
+/* Text Viewer Toggle Display Styles */
+.text-viewer .token {
+    position: relative;
+    display: inline-block;
+    padding: 2px 0;
+}
+
+/* Show transliteration below Greek text */
+.text-viewer.show-transliteration .token::after {
+    content: attr(data-transliteration);
+    display: block;
+    font-size: 0.85em;
+    color: #666;
+    font-style: italic;
+    margin-top: 2px;
+}
+
+/* Show morphology as tooltip on hover */
+.text-viewer.show-morphology .token::before {
+    content: attr(data-morphology);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 100;
+}
+
+.text-viewer.show-morphology .token:hover::before {
+    opacity: 1;
+}
+
+/* Show annotations */
+.text-viewer.show-annotations .token[data-character] {
+    background: rgba(52, 152, 219, 0.2);
+    border-radius: 3px;
+    padding: 2px 4px;
+}
+
+.text-viewer.show-annotations .token.holy-spirit {
+    background: rgba(255, 107, 107, 0.3);
+}
+
+.text-viewer.show-annotations .token.cue {
+    border-bottom: 2px solid;
+}
+
+.text-viewer.show-annotations .token.cue.primacy {
+    border-bottom-color: #f39c12;
+}
+
+.text-viewer.show-annotations .token.cue.causal {
+    border-bottom-color: #9b59b6;
+}
+
+.text-viewer.show-annotations .token.cue.focalization {
+    border-bottom-color: #3498db;
+}
+
+.text-viewer.show-annotations .token.cue.absence {
+    border-bottom-color: #e74c3c;
+}
+
+.text-viewer.show-annotations .token.cue.prolepsis {
+    border-bottom-color: #1abc9c;
+}

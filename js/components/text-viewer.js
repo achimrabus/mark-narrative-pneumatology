@@ -170,7 +170,7 @@ class TextViewer {
 
             const verseNumber = document.createElement('span');
             verseNumber.className = 'verse-number';
-            verseNumber.textContent = `${verse}`;
+            verseNumber.textContent = `${this.currentChapter}:${verse}`;
             verseContainer.appendChild(verseNumber);
 
             const verseText = document.createElement('div');
@@ -189,6 +189,8 @@ class TextViewer {
                     tokenElement.dataset.token = token.id;
                     tokenElement.dataset.lemma = token.lemma;
                     tokenElement.dataset.pos = token.upos;
+                    tokenElement.dataset.transliteration = this.transliterate(token.form);
+                    tokenElement.dataset.morphology = this.parseMorphology(token.feats);
                     tokenElement.textContent = token.form + ' ';
 
                     // Check for character names (pass token object for lemma-based matching)
@@ -377,23 +379,40 @@ class TextViewer {
     }
 
     /**
-     * Transliterate Greek text
+     * Transliterate Greek text (including polytonic characters)
      * @param {string} greek - Greek text
      * @returns {string} Transliterated text
      */
     transliterate(greek) {
+        // Normalize Greek text to remove diacritics while preserving base letters
+        const normalized = greek.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
         const translitMap = {
+            // Lowercase
             'α': 'a', 'β': 'b', 'γ': 'g', 'δ': 'd', 'ε': 'e', 'ζ': 'z',
             'η': 'ē', 'θ': 'th', 'ι': 'i', 'κ': 'k', 'λ': 'l', 'μ': 'm',
-            'ν': 'n', 'ξ': 'x', 'ο': 'o', 'π': 'p', 'ρ': 'r', 'σ': 's',
-            'τ': 't', 'υ': 'u', 'φ': 'ph', 'χ': 'ch', 'ψ': 'ps', 'ω': 'ō',
+            'ν': 'n', 'ξ': 'x', 'ο': 'o', 'π': 'p', 'ρ': 'r', 'σ': 's', 'ς': 's',
+            'τ': 't', 'υ': 'y', 'φ': 'ph', 'χ': 'ch', 'ψ': 'ps', 'ω': 'ō',
+            // Uppercase
             'Α': 'A', 'Β': 'B', 'Γ': 'G', 'Δ': 'D', 'Ε': 'E', 'Ζ': 'Z',
             'Η': 'Ē', 'Θ': 'Th', 'Ι': 'I', 'Κ': 'K', 'Λ': 'L', 'Μ': 'M',
             'Ν': 'N', 'Ξ': 'X', 'Ο': 'O', 'Π': 'P', 'Ρ': 'R', 'Σ': 'S',
-            'Τ': 'T', 'Υ': 'U', 'Φ': 'Ph', 'Χ': 'Ch', 'Ψ': 'Ps', 'Ω': 'Ō'
+            'Τ': 'T', 'Υ': 'Y', 'Φ': 'Ph', 'Χ': 'Ch', 'Ψ': 'Ps', 'Ω': 'Ō',
+            // Polytonic variations (common ones)
+            'ἀ': 'a', 'ἁ': 'ha', 'ἂ': 'a', 'ἃ': 'ha', 'ἄ': 'a', 'ἅ': 'ha',
+            'ἆ': 'a', 'ἇ': 'ha', 'ᾀ': 'a', 'ᾁ': 'ha', 'ᾂ': 'a', 'ᾃ': 'ha',
+            'ἐ': 'e', 'ἑ': 'he', 'ἒ': 'e', 'ἓ': 'he', 'ἔ': 'e', 'ἕ': 'he',
+            'ἠ': 'ē', 'ἡ': 'hē', 'ἢ': 'ē', 'ἣ': 'hē', 'ἤ': 'ē', 'ἥ': 'hē',
+            'ἰ': 'i', 'ἱ': 'hi', 'ἲ': 'i', 'ἳ': 'hi', 'ἴ': 'i', 'ἵ': 'hi',
+            'ὀ': 'o', 'ὁ': 'ho', 'ὂ': 'o', 'ὃ': 'ho', 'ὄ': 'o', 'ὅ': 'ho',
+            'ὐ': 'y', 'ὑ': 'hy', 'ὒ': 'y', 'ὓ': 'hy', 'ὔ': 'y', 'ὕ': 'hy',
+            'ὠ': 'ō', 'ὡ': 'hō', 'ὢ': 'ō', 'ὣ': 'hō', 'ὤ': 'ō', 'ὥ': 'hō',
+            // Capital polytonic
+            'Ἀ': 'A', 'Ἁ': 'Ha', 'Ἐ': 'E', 'Ἑ': 'He', 'Ἠ': 'Ē', 'Ἡ': 'Hē',
+            'Ἰ': 'I', 'Ἱ': 'Hi', 'Ὀ': 'O', 'Ὁ': 'Ho', 'Ὑ': 'Hy', 'Ὠ': 'Ō', 'Ὡ': 'Hō'
         };
 
-        return greek.split('').map(char => translitMap[char] || char).join('');
+        return normalized.split('').map(char => translitMap[char] || char).join('');
     }
 
     /**
