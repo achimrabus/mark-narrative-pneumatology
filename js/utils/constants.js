@@ -31,11 +31,25 @@ const CUE_COLORS = {
     prolepsis: '#1abc9c'
 };
 
-// Character colors
+// Character colors (specific characters)
 const CHARACTER_COLORS = {
+    // Special characters with distinct colors
+    'Holy Spirit': '#ff6b6b',  // Red - primary research focus
+    'Jesus': '#3498db',         // Blue - main protagonist
+    'God': '#f39c12',           // Gold/Orange - divine
+    'Peter': '#27ae60',         // Green
+    'John': '#8e44ad',          // Purple
+    'James': '#16a085',         // Teal
+    'Mary': '#e91e63',          // Pink
+    'Judas': '#95a5a6',         // Gray
+    'Herod': '#c0392b',         // Dark red
+    'Satan': '#34495e',         // Dark gray
+
+    // Default colors by group
     spirit: '#ff6b6b',
     human: '#4ecdc4',
-    divine: '#f39c12'
+    divine: '#f39c12',
+    default: '#95a5a6'
 };
 
 // View types

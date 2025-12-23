@@ -87,21 +87,24 @@ class TimelineVisualization {
             s.tokens.map(t => t.form).join(' ')
         ).join(' ');
 
-        // Identify characters in verse
+        // Identify characters in verse (using lemma-based matching)
         const characters = new Set();
         const characterDetails = [];
 
         for (const sentence of verseSentences) {
             for (const token of sentence.tokens) {
                 for (const [charName, charData] of conllParser.characters) {
-                    if (charData.variants.some(variant => token.form.includes(variant))) {
+                    // Check if this character's occurrences include this lemma
+                    if (charData.occurrences.some(occ => occ.lemma === token.lemma)) {
                         characters.add(charName);
                         characterDetails.push({
                             name: charName,
                             token: token.form,
+                            lemma: token.lemma,
                             role: token.deprel,
                             position: token.id
                         });
+                        break; // Found match, move to next token
                     }
                 }
             }

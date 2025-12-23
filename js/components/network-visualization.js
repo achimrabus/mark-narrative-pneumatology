@@ -62,6 +62,23 @@ class NetworkVisualization {
     }
 
     /**
+     * Get color for character
+     * @param {string} characterName - Character name
+     * @returns {string} Color hex code
+     */
+    getCharacterColor(characterName) {
+        if (window.CONSTANTS && window.CONSTANTS.CHARACTER_COLORS) {
+            return window.CONSTANTS.CHARACTER_COLORS[characterName] ||
+                   window.CONSTANTS.CHARACTER_COLORS.default;
+        }
+        // Fallback colors
+        if (characterName === 'Holy Spirit') return '#ff6b6b';
+        if (characterName === 'Jesus') return '#3498db';
+        if (characterName === 'God') return '#f39c12';
+        return '#95a5a6';
+    }
+
+    /**
      * Update visualization for specific chapter
      * @param {number} chapter - Chapter number
      */
@@ -230,6 +247,9 @@ class NetworkVisualization {
                 if (d.name === 'Jesus') classes += ' jesus';
                 return classes;
             })
+            .attr('fill', d => this.getCharacterColor(d.name))
+            .attr('stroke', '#333')
+            .attr('stroke-width', 2)
             .on('mouseover', (event, d) => {
                 this.showNodeTooltip(event, d);
             })

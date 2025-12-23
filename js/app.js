@@ -95,15 +95,15 @@ class NarratologyApp {
      * Initialize view containers
      */
     initializeViews() {
-        // Network view
-        this.networkView = new NetworkVisualization('network-view', this.data);
-        
-        // Timeline view
-        this.timelineView = new TimelineVisualization('timeline-view', this.data);
-        
+        // Network view (use correct container ID from HTML)
+        this.networkView = new NetworkVisualization('network-graph', this.data);
+
+        // Timeline view (use correct container ID from HTML)
+        this.timelineView = new TimelineVisualization('narrative-flow', this.data);
+
         // Text view
         this.textView = new TextViewer('text-view', this.data);
-        
+
         // Analysis view
         this.analysisView = new AnalysisPanel('analysis-view', this.data);
     }
