@@ -537,3 +537,46 @@
         transform: translateY(0);
     }
 }
+/* Timeline Visualization Styles */
+.timeline-container .intensity-area {
+    fill: url(#intensity-gradient);
+    opacity: 0.6;
+}
+
+.timeline-container .intensity-line {
+    fill: none;
+    stroke: #3498db;
+    stroke-width: 3px;
+}
+
+.timeline-container .verse-point circle {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.timeline-container .verse-point circle:hover {
+    r: 8;
+    stroke-width: 3;
+}
+
+.timeline-container .holy-spirit-marker {
+    pointer-events: none;
+}
+
+.timeline-container .axis-label {
+    font-size: 14px;
+    fill: #2c3e50;
+}
+
+.timeline-container .x-axis text,
+.timeline-container .y-axis text {
+    font-size: 12px;
+    fill: #7f8c8d;
+}
+
+.timeline-container .x-axis path,
+.timeline-container .y-axis path,
+.timeline-container .x-axis line,
+.timeline-container .y-axis line {
+    stroke: #bdc3c7;
+}

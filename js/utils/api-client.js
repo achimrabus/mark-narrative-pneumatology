@@ -20,11 +20,11 @@ class APIClient {
             claude: {
                 name: 'Claude (Anthropic)',
                 endpoint: 'https://api.anthropic.com/v1/messages',
-                defaultModel: 'claude-sonnet-4.5',
+                defaultModel: 'claude-3-5-sonnet-20241022',
                 models: [
-                    'claude-opus-4.5',
-                    'claude-sonnet-4.5',
-                    'claude-haiku-4.5'
+                    'claude-3-5-sonnet-20241022',
+                    'claude-3-5-haiku-20241022',
+                    'claude-3-opus-20240229'
                 ],
                 format: 'anthropic',
                 storageKey: 'claude_api_key'
@@ -32,12 +32,12 @@ class APIClient {
             openai: {
                 name: 'OpenAI ChatGPT',
                 endpoint: 'https://api.openai.com/v1/chat/completions',
-                defaultModel: 'gpt-5.2',
+                defaultModel: 'gpt-4o',
                 models: [
-                    'gpt-5.2',
-                    'gpt-5.2-mini',
                     'gpt-4o',
-                    'gpt-4o-mini'
+                    'gpt-4o-mini',
+                    'gpt-4-turbo-preview',
+                    'gpt-3.5-turbo'
                 ],
                 format: 'openai',
                 storageKey: 'openai_api_key'
@@ -45,11 +45,11 @@ class APIClient {
             gemini: {
                 name: 'Google Gemini',
                 endpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
-                defaultModel: 'gemini-3-flash',
+                defaultModel: 'gemini-1.5-flash',
                 models: [
-                    'gemini-3-ultra',
-                    'gemini-3-pro',
-                    'gemini-3-flash'
+                    'gemini-1.5-pro',
+                    'gemini-1.5-flash',
+                    'gemini-pro'
                 ],
                 format: 'gemini',
                 storageKey: 'gemini_api_key'
@@ -138,6 +138,82 @@ class APIClient {
     }
 
     /**
+     * Fetch available models from API provider
+     * @param {string} providerId - Provider ID
+     * @returns {Promise<Array>} List of available models
+     */
+    async fetchAvailableModels(providerId) {
+        const provider = this.providers[providerId];
+        if (!provider) return [];
+
+        const apiKey = localStorage.getItem(provider.storageKey);
+        if (!apiKey) {
+            console.warn(`[API] No API key for ${provider.name}, using default models`);
+            return provider.models;
+        }
+
+        try {
+            let endpoint, headers;
+
+            switch (provider.format) {
+                case 'openai':
+                    endpoint = 'https://api.openai.com/v1/models';
+                    headers = {
+                        'Authorization': `Bearer ${apiKey}`
+                    };
+                    break;
+
+                case 'anthropic':
+                    // Claude doesn't have a public models endpoint, use defaults
+                    console.log(`[API] Claude models endpoint not available, using defaults`);
+                    return provider.models;
+
+                case 'gemini':
+                    endpoint = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+                    headers = {};
+                    break;
+
+                default:
+                    return provider.models;
+            }
+
+            console.log(`[API] Fetching available models for ${provider.name}...`);
+            const response = await fetch(endpoint, { headers });
+
+            if (!response.ok) {
+                console.warn(`[API] Failed to fetch models for ${provider.name}, using defaults`);
+                return provider.models;
+            }
+
+            const data = await response.json();
+
+            // Parse response based on provider
+            let models = [];
+            if (provider.format === 'openai') {
+                models = data.data
+                    .filter(m => m.id.includes('gpt'))
+                    .map(m => m.id);
+            } else if (provider.format === 'gemini') {
+                models = data.models
+                    .filter(m => m.supportedGenerationMethods &&
+                               m.supportedGenerationMethods.includes('generateContent'))
+                    .map(m => m.name.replace('models/', ''));
+            }
+
+            console.log(`[API] Found ${models.length} models for ${provider.name}:`, models);
+
+            // Update provider config with actual models
+            provider.models = models.length > 0 ? models : provider.models;
+
+            return models.length > 0 ? models : provider.models;
+
+        } catch (error) {
+            console.error(`[API] Error fetching models for ${provider.name}:`, error);
+            return provider.models;
+        }
+    }
+
+    /**
      * Make API request
      * @param {string} prompt - Prompt to send to AI
      * @param {Object} options - Additional options
@@ -217,6 +293,7 @@ class APIClient {
         }
 
         try {
+            console.log(`[API] Making request to ${provider.name} (${this.currentModel})`);
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: headers,
@@ -224,14 +301,30 @@ class APIClient {
             });
 
             if (!response.ok) {
-                throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                const errorText = await response.text().catch(() => response.statusText);
+                console.error(`[API] Request failed:`, {
+                    provider: provider.name,
+                    model: this.currentModel,
+                    status: response.status,
+                    error: errorText
+                });
+                throw new Error(`${provider.name} API error (${response.status}): ${errorText || response.statusText}`);
             }
 
             const result = await response.json();
+            console.log(`[API] Request successful to ${provider.name}`);
             return this.normalizeResponse(result, provider.format);
         } catch (error) {
-            console.error('API request failed:', error);
-            throw new Error('Failed to communicate with analysis service: ' + error.message);
+            console.error('[API] Request failed:', error);
+            // More specific error messages
+            if (error.message.includes('404')) {
+                throw new Error(`Model "${this.currentModel}" not found. Please check if this model exists for ${provider.name}.`);
+            } else if (error.message.includes('401') || error.message.includes('403')) {
+                throw new Error(`Authentication failed for ${provider.name}. Please check your API key.`);
+            } else if (error.message.includes('429')) {
+                throw new Error(`Rate limit exceeded for ${provider.name}. Please try again later.`);
+            }
+            throw new Error(`${provider.name} error: ${error.message}`);
         }
     }
 
@@ -460,21 +553,33 @@ Respond in JSON format with pattern analysis.`;
             const cancelBtn = document.getElementById('cancel-api-config');
 
             // Handle provider change
-            providerSelect.addEventListener('change', (e) => {
+            providerSelect.addEventListener('change', async (e) => {
                 const newProvider = e.target.value;
                 const newProviderConfig = this.providers[newProvider];
-
-                // Update model dropdown
-                modelSelect.innerHTML = newProviderConfig.models.map(model =>
-                    `<option value="${model}">${model}</option>`
-                ).join('');
-
-                // Update API key placeholder
-                input.placeholder = `Enter your ${newProviderConfig.name} API key`;
 
                 // Load existing API key for this provider
                 const existingKey = localStorage.getItem(newProviderConfig.storageKey);
                 input.value = existingKey || '';
+
+                // Update API key placeholder
+                input.placeholder = `Enter your ${newProviderConfig.name} API key`;
+
+                // Fetch actual available models if we have an API key
+                let models = newProviderConfig.models;
+                if (existingKey) {
+                    modelSelect.innerHTML = '<option>Loading models...</option>';
+                    try {
+                        const fetchedModels = await this.fetchAvailableModels(newProvider);
+                        models = fetchedModels;
+                    } catch (error) {
+                        console.error('Failed to fetch models:', error);
+                    }
+                }
+
+                // Update model dropdown
+                modelSelect.innerHTML = models.map(model =>
+                    `<option value="${model}">${model}</option>`
+                ).join('');
             });
 
             saveBtn.addEventListener('click', () => {

@@ -183,6 +183,25 @@ class TimelineVisualization {
         const width = this.container.clientWidth - margin.left - margin.right;
         const height = this.container.clientHeight - margin.top - margin.bottom;
 
+        // Add gradient definition for area
+        const defs = this.svg.append('defs');
+        const gradient = defs.append('linearGradient')
+            .attr('id', 'intensity-gradient')
+            .attr('x1', '0%')
+            .attr('y1', '0%')
+            .attr('x2', '0%')
+            .attr('y2', '100%');
+
+        gradient.append('stop')
+            .attr('offset', '0%')
+            .attr('stop-color', '#3498db')
+            .attr('stop-opacity', 0.8);
+
+        gradient.append('stop')
+            .attr('offset', '100%')
+            .attr('stop-color', '#3498db')
+            .attr('stop-opacity', 0.1);
+
         const g = this.svg.append('g')
             .attr('transform', `translate(${margin.left},${margin.top})`);
 
