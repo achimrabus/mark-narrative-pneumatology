@@ -422,3 +422,117 @@
         margin-bottom: 0.5rem;
     }
 }
+/* API Configuration Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.api-config-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.api-config-modal h3 {
+    margin: 0 0 1.5rem 0;
+    color: #2c3e50;
+    font-size: 1.5rem;
+}
+
+.config-section {
+    margin-bottom: 1.5rem;
+}
+
+.config-section label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.config-section select,
+.config-section input[type="password"],
+.config-section input[type="text"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.config-section select:focus,
+.config-section input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.help-text {
+    display: block;
+    margin-top: 0.5rem;
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.modal-buttons .btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-buttons .btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.modal-buttons .btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.modal-buttons .btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.modal-buttons .btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
+/* API Status Indicator in Header */
+.api-status-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.api-status-info .provider-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+

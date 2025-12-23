@@ -241,6 +241,7 @@ class NarratologyApp {
         try {
             this.apiAvailable = await apiClient.checkAvailability();
             this.updateAPIStatus();
+            this.updateAPIDisplay();
         } catch (error) {
             console.warn('API check failed:', error);
             this.apiAvailable = false;
@@ -254,13 +255,27 @@ class NarratologyApp {
     updateAPIStatus() {
         const statusIndicator = document.getElementById('api-status');
         if (!statusIndicator) return;
-        
+
         if (this.apiAvailable) {
             statusIndicator.className = 'status-indicator online';
-            statusIndicator.textContent = 'API Online';
+            statusIndicator.querySelector('.status-text').textContent = 'API Online';
         } else {
             statusIndicator.className = 'status-indicator offline';
-            statusIndicator.textContent = 'API Offline';
+            statusIndicator.querySelector('.status-text').textContent = 'API Offline';
+        }
+    }
+
+    /**
+     * Update API provider and model display in header
+     */
+    updateAPIDisplay() {
+        const providerBadge = document.getElementById('provider-badge');
+        const modelName = document.getElementById('model-name');
+
+        if (providerBadge && modelName && apiClient) {
+            const config = apiClient.getProviderConfig();
+            providerBadge.textContent = config.name;
+            modelName.textContent = apiClient.currentModel;
         }
     }
 
@@ -269,14 +284,15 @@ class NarratologyApp {
      */
     async handleAPIKeySetup() {
         try {
-            const apiKey = await apiClient.requestApiKey();
-            if (apiKey) {
+            const config = await apiClient.requestApiKey();
+            if (config) {
                 await this.checkAPIAvailability();
-                this.showNotification('API key saved successfully', 'success');
+                this.updateAPIDisplay();
+                this.showNotification(`API configured: ${config.provider} (${config.model})`, 'success');
             }
         } catch (error) {
             console.error('API key setup failed:', error);
-            this.showNotification('Failed to set up API key', 'error');
+            this.showNotification('Failed to set up API configuration', 'error');
         }
     }
 

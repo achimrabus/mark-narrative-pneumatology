@@ -191,12 +191,12 @@ class TextViewer {
                     tokenElement.dataset.pos = token.upos;
                     tokenElement.textContent = token.form + ' ';
 
-                    // Check for character names
-                    const characterName = this.getCharacterName(token.form);
+                    // Check for character names (pass token object for lemma-based matching)
+                    const characterName = this.getCharacterName(token);
                     if (characterName) {
                         tokenElement.classList.add('character');
                         tokenElement.dataset.character = characterName;
-                        
+
                         // Special styling for Holy Spirit
                         if (characterName === 'Holy Spirit') {
                             tokenElement.classList.add('holy-spirit');
@@ -282,12 +282,25 @@ class TextViewer {
 
     /**
      * Get character name from token
-     * @param {string} token - Token text
+     * @param {Object} token - Token object with form and lemma
      * @returns {string|null} Character name
      */
     getCharacterName(token) {
+        // Check by lemma (primary method)
+        const lemma = typeof token === 'object' ? token.lemma : null;
+        if (lemma) {
+            for (const [name, character] of conllParser.characters) {
+                // Check if this character's occurrences include this lemma
+                if (character.occurrences.some(occ => occ.lemma === lemma)) {
+                    return name;
+                }
+            }
+        }
+
+        // Fallback: check by form
+        const form = typeof token === 'object' ? token.form : token;
         for (const [name, character] of conllParser.characters) {
-            if (character.variants.some(variant => token.includes(variant))) {
+            if (character.variants.some(variant => form.includes(variant) || variant.includes(form))) {
                 return name;
             }
         }

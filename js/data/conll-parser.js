@@ -161,62 +161,67 @@ class CONLLParser {
      * Extract character names and references
      */
     extractCharacters() {
-        // Common character names in Mark's Gospel
-        const characterNames = [
-            'Ιησους', 'Ιησου', 'Ιησουν',  // Jesus (nominative, genitive, accusative)
-            'Πετρος', 'Πετρου', 'Πετρον',  // Peter
-            'Ανδρεας', 'Ανδρεου',         // Andrew
-            'Ιακωβος', 'Ιακωβου',         // James
-            'Ιωαννης', 'Ιωαννου',          // John
-            'Φιλιππος', 'Φιλιππου',        // Philip
-            'Βαρθολομαιος', 'Βαρθολομαιου', // Bartholomew
-            'Μαθθαιος', 'Μαθθαιου',        // Matthew
-            'Θωμας', 'Θωμου',              // Thomas
-            'Ιακωβος', 'Ιακωβου',          // James (son of Alphaeus)
-            'Θαδδαιος', 'Θαδδαιου',        // Thaddaeus
-            'Σιμων', 'Σιμωνος',            // Simon (the Cananaean)
-            'Ιουδας', 'Ιουδα',             // Judas (Iscariot)
-            'Πνευμα', 'Πνευματος',         // Spirit/Holy Spirit
-            'Αγιον', 'Αγιου',              // Holy
-            'Θεος', 'Θεου',                // God
-            'Αβρααμ', 'Αβρααμ',            // Abraham
-            'Δαυειδ', 'Δαυειδ',            // David
-            'Μωυσης', 'Μωυσεως',           // Moses
-            'Ηρωδης', 'Ηρωδου',            // Herod
-            'Ιωαννης', 'Ιωαννου',          // John the Baptist
-            'Βαπτιστης', 'Βαπτιστηου'      // Baptist
+        // Common character lemmas in Mark's Gospel (using lemma forms from PROIEL data)
+        const characterLemmas = [
+            'Ἰησοῦς',           // Jesus
+            'Πέτρος',           // Peter
+            'Ἀνδρέας',          // Andrew
+            'Ἰάκωβος',          // James
+            'Ἰωάν(ν)ης',        // John (note: PROIEL uses this form)
+            'Φίλιππος',         // Philip
+            'Βαρθολομαῖος',     // Bartholomew
+            'Μαθθαῖος',         // Matthew
+            'Θωμᾶς',            // Thomas
+            'Θαδδαῖος',         // Thaddaeus
+            'Σίμων',            // Simon
+            'Ἰούδας',           // Judas
+            'πνεῦμα',           // Spirit/Holy Spirit
+            'ἅγιος',            // Holy
+            'θεός',             // God
+            'Ἀβραάμ',           // Abraham
+            'Δαυίδ',            // David
+            'Μωϋσῆς',           // Moses
+            'Ἡρῴδης',           // Herod
+            'βαπτιστής',        // Baptist
+            'Μαρία',            // Mary
+            'Ἰωσήφ',            // Joseph
+            'διάβολος',         // Devil/Satan
+            'Χριστός',          // Christ
+            'Ναζαρηνός',        // Nazarene
+            'Γαλιλαῖος'         // Galilean
         ];
 
         for (const sentence of this.data.sentences) {
             for (const token of sentence.tokens) {
-                const form = token.form;
-                
-                // Check if token matches any character name
-                for (const name of characterNames) {
-                    if (form.includes(name)) {
-                        const baseName = this.getBaseCharacterName(name);
-                        
+                const lemma = token.lemma;
+
+                // Check if token lemma matches any character name
+                for (const characterLemma of characterLemmas) {
+                    if (lemma === characterLemma) {
+                        const baseName = this.getBaseCharacterName(characterLemma);
+
                         if (!this.characters.has(baseName)) {
                             this.characters.set(baseName, {
                                 name: baseName,
-                                variants: new Set([name]),
+                                variants: new Set([characterLemma]),
                                 occurrences: [],
                                 totalMentions: 0
                             });
                         }
-                        
+
                         const character = this.characters.get(baseName);
-                        character.variants.add(name);
+                        character.variants.add(token.form); // Add actual form variant
                         character.occurrences.push({
                             sentence: sentence.id,
                             chapter: sentence.chapter,
                             verse: sentence.verse,
                             token: token.id,
-                            form: form,
+                            form: token.form,
                             lemma: token.lemma,
                             role: token.deprel
                         });
                         character.totalMentions++;
+                        break; // Found match, no need to check other lemmas
                     }
                 }
             }
@@ -229,31 +234,41 @@ class CONLLParser {
     }
 
     /**
-     * Get base character name from variant
-     * @param {string} variant - Name variant
+     * Get base character name from lemma
+     * @param {string} lemma - Character lemma
      * @returns {string} Base character name
      */
-    getBaseCharacterName(variant) {
+    getBaseCharacterName(lemma) {
         const nameMap = {
-            'Ιησους': 'Jesus',
-            'Ιησου': 'Jesus',
-            'Ιησουν': 'Jesus',
-            'Πετρος': 'Peter',
-            'Πετρου': 'Peter',
-            'Πετρον': 'Peter',
-            'Πνευμα': 'Holy Spirit',
-            'Πνευματος': 'Holy Spirit',
-            'Αγιον': 'Holy Spirit',
-            'Αγιου': 'Holy Spirit',
-            'Θεος': 'God',
-            'Θεου': 'God',
-            'Ιωαννης': 'John',
-            'Ιωαννου': 'John',
-            'Βαπτιστης': 'John the Baptist',
-            'Βαπτιστηου': 'John the Baptist'
+            'Ἰησοῦς': 'Jesus',
+            'Πέτρος': 'Peter',
+            'Ἀνδρέας': 'Andrew',
+            'Ἰάκωβος': 'James',
+            'Ἰωάν(ν)ης': 'John',
+            'Φίλιππος': 'Philip',
+            'Βαρθολομαῖος': 'Bartholomew',
+            'Μαθθαῖος': 'Matthew',
+            'Θωμᾶς': 'Thomas',
+            'Θαδδαῖος': 'Thaddaeus',
+            'Σίμων': 'Simon',
+            'Ἰούδας': 'Judas',
+            'πνεῦμα': 'Holy Spirit',
+            'ἅγιος': 'Holy',
+            'θεός': 'God',
+            'Ἀβραάμ': 'Abraham',
+            'Δαυίδ': 'David',
+            'Μωϋσῆς': 'Moses',
+            'Ἡρῴδης': 'Herod',
+            'βαπτιστής': 'Baptist',
+            'Μαρία': 'Mary',
+            'Ἰωσήφ': 'Joseph',
+            'διάβολος': 'Satan',
+            'Χριστός': 'Christ',
+            'Ναζαρηνός': 'Nazarene',
+            'Γαλιλαῖος': 'Galilean'
         };
 
-        return nameMap[variant] || variant;
+        return nameMap[lemma] || lemma;
     }
 
     /**
