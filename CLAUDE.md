@@ -167,11 +167,13 @@ The application now supports multiple AI providers:
 - **OpenWebUI** (default): `https://openwebui.uni-freiburg.de/api/v1/chat/completions`
   - Models: glm-4.6-llmlb, qwen2.5-14b-instruct, llama-3.1-8b
 - **Claude (Anthropic)**: `https://api.anthropic.com/v1/messages`
-  - Models: claude-3-7-sonnet-20250219, claude-3-5-sonnet-20241022, claude-3-5-haiku-20241022
-- **OpenAI GPT**: `https://api.openai.com/v1/chat/completions`
-  - Models: gpt-4o, gpt-4o-mini, gpt-4-turbo
+  - Models: claude-opus-4.5, claude-sonnet-4.5, claude-haiku-4.5
+- **OpenAI ChatGPT**: `https://api.openai.com/v1/chat/completions`
+  - Models: gpt-5.2, gpt-5.2-mini, gpt-4o, gpt-4o-mini
 - **Google Gemini**: `https://generativelanguage.googleapis.com/v1beta/models`
-  - Models: gemini-2.0-flash-exp, gemini-1.5-pro-latest, gemini-1.5-flash-latest
+  - Models: gemini-3-ultra, gemini-3-pro, gemini-3-flash
+
+**Note**: Model lists are configured in `js/utils/api-client.js` lines 20-56 and can be easily updated as new models become available.
 
 **Configuration UI:**
 - Click "Configure API" button in header

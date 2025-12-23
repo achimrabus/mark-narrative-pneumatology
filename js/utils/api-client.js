@@ -20,28 +20,37 @@ class APIClient {
             claude: {
                 name: 'Claude (Anthropic)',
                 endpoint: 'https://api.anthropic.com/v1/messages',
-                defaultModel: 'claude-3-7-sonnet-20250219',
+                defaultModel: 'claude-sonnet-4.5',
                 models: [
-                    'claude-3-7-sonnet-20250219',
-                    'claude-3-5-sonnet-20241022',
-                    'claude-3-5-haiku-20241022'
+                    'claude-opus-4.5',
+                    'claude-sonnet-4.5',
+                    'claude-haiku-4.5'
                 ],
                 format: 'anthropic',
                 storageKey: 'claude_api_key'
             },
             openai: {
-                name: 'OpenAI GPT',
+                name: 'OpenAI ChatGPT',
                 endpoint: 'https://api.openai.com/v1/chat/completions',
-                defaultModel: 'gpt-4o',
-                models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+                defaultModel: 'gpt-5.2',
+                models: [
+                    'gpt-5.2',
+                    'gpt-5.2-mini',
+                    'gpt-4o',
+                    'gpt-4o-mini'
+                ],
                 format: 'openai',
                 storageKey: 'openai_api_key'
             },
             gemini: {
                 name: 'Google Gemini',
                 endpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
-                defaultModel: 'gemini-2.0-flash-exp',
-                models: ['gemini-2.0-flash-exp', 'gemini-1.5-pro-latest', 'gemini-1.5-flash-latest'],
+                defaultModel: 'gemini-3-flash',
+                models: [
+                    'gemini-3-ultra',
+                    'gemini-3-pro',
+                    'gemini-3-flash'
+                ],
                 format: 'gemini',
                 storageKey: 'gemini_api_key'
             }
