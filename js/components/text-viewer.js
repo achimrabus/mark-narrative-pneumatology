@@ -134,18 +134,32 @@ class TextViewer {
         verses.forEach(verse => {
             const verseItem = document.createElement('div');
             verseItem.className = 'verse-item';
-            verseItem.textContent = `${this.currentChapter}:${verse}`;
-            
+
+            // Get verse text preview
+            const verseText = chapterData[verse].map(s =>
+                s.tokens.map(t => t.form).join(' ')
+            ).join(' ');
+
+            // Create verse number
+            const verseNum = document.createElement('span');
+            verseNum.className = 'verse-num';
+            verseNum.textContent = `${this.currentChapter}:${verse}`;
+
+            // Create text preview (truncated)
+            const versePreview = document.createElement('span');
+            versePreview.className = 'verse-preview';
+            versePreview.textContent = verseText.length > 40 ? verseText.substring(0, 40) + '...' : verseText;
+
+            verseItem.appendChild(verseNum);
+            verseItem.appendChild(versePreview);
+
             verseItem.addEventListener('click', () => {
                 this.highlightVerse(this.currentChapter, parseInt(verse));
             });
 
             // Highlight if this verse has Holy Spirit mentions
-            const verseText = chapterData[verse].map(s => 
-                s.tokens.map(t => t.form).join(' ')
-            ).join(' ');
-
-            if (verseText.includes('Πνευμα') || verseText.includes('Πνευματος')) {
+            if (verseText.includes('Πνευμα') || verseText.includes('Πνευματος') ||
+                verseText.includes('πνεῦμα') || verseText.includes('πνεύματος')) {
                 verseItem.classList.add('holy-spirit-verse');
             }
 

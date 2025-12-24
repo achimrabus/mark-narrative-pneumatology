@@ -611,3 +611,56 @@
 .text-viewer.show-annotations .token.cue.prolepsis {
     border-bottom-color: #1abc9c;
 }
+
+/* Verse List Navigation Styles */
+#verse-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+}
+
+.verse-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.verse-item:hover {
+    background: #f8f9fa;
+}
+
+.verse-item.holy-spirit-verse {
+    background: rgba(255, 107, 107, 0.1);
+}
+
+.verse-item.holy-spirit-verse:hover {
+    background: rgba(255, 107, 107, 0.2);
+}
+
+.verse-item .verse-num {
+    font-weight: 600;
+    color: #3498db;
+    min-width: 50px;
+}
+
+.verse-item .verse-preview {
+    color: #6c757d;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Fix Reset View button */
+#reset-network {
+    background: #6c757d;
+    border: none;
+    padding: 0.5rem 1rem;
+    display: inline-block;
+}

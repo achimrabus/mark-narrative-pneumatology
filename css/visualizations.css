@@ -112,6 +112,23 @@
     opacity: 1;
 }
 
+/* Network link types */
+.link.co-occurrence {
+    stroke: #3498db;
+    stroke-opacity: 0.6;
+}
+
+.link.causal {
+    stroke: #9b59b6;
+    stroke-dasharray: 5, 3;
+    stroke-opacity: 0.8;
+}
+
+.links line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+}
+
 /* Narrative Flow Timeline Styles */
 .timeline-container {
     position: relative;

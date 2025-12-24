@@ -45,12 +45,17 @@ class NetworkVisualization {
         // Create main group
         this.g = this.svg.append('g');
 
-        // Create force simulation
+        // Create force simulation with dynamic centering
+        const width = this.container.clientWidth || 800;
+        const height = this.container.clientHeight || 600;
+
         this.simulation = d3.forceSimulation()
-            .force('link', d3.forceLink().id(d => d.id).distance(100))
-            .force('charge', d3.forceManyBody().strength(-300))
-            .force('center', d3.forceCenter(400, 300))
-            .force('collision', d3.forceCollide().radius(30));
+            .force('link', d3.forceLink().id(d => d.id).distance(120))
+            .force('charge', d3.forceManyBody().strength(-400))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('collision', d3.forceCollide().radius(40))
+            .force('x', d3.forceX(width / 2).strength(0.05))
+            .force('y', d3.forceY(height / 2).strength(0.05));
 
         // Create tooltip
         this.tooltip = d3.select('body').append('div')
