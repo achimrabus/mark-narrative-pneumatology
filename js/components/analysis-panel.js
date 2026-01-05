@@ -26,9 +26,12 @@ class AnalysisPanel {
 
         // Create panel structure
         this.createPanelStructure();
-        
+
         // Load initial data
         this.update(1);
+
+        // Display chapter overview (runs after data is loaded)
+        setTimeout(() => this.displayChapterOverview(), 100);
     }
 
     /**
@@ -46,6 +49,7 @@ class AnalysisPanel {
             </div>
             <div class="analysis-content">
                 <div class="analysis-tabs">
+                    <button class="tab-btn" data-tab="overview">Chapter Overview</button>
                     <button class="tab-btn active" data-tab="cues">Attentional Cues</button>
                     <button class="tab-btn" data-tab="characters">Character Analysis</button>
                     <button class="tab-btn" data-tab="patterns">Narrative Patterns</button>
@@ -57,6 +61,9 @@ class AnalysisPanel {
                         <p>Running analysis...</p>
                     </div>
                     <div id="analysis-results" class="analysis-results">
+                        <div class="tab-content" id="overview-tab">
+                            <div class="chapter-overview-loading">Loading chapter statistics...</div>
+                        </div>
                         <div class="tab-content active" id="cues-tab">
                             <div class="analysis-placeholder">
                                 <h3>Attentional Cues</h3>
@@ -833,6 +840,166 @@ class AnalysisPanel {
                 <p>Specific analysis of Holy Spirit as background character.</p>
             </div>
         `;
+    }
+
+    /**
+     * Display chapter overview with statistics across all chapters
+     */
+    displayChapterOverview() {
+        const overviewTab = document.getElementById('overview-tab');
+        if (!overviewTab) return;
+
+        // Collect statistics for all chapters
+        const chapterStats = [];
+        const cueTypes = ['primacy', 'causal', 'focalization', 'absence', 'prolepsis'];
+        const totalCues = conllParser.data.cues || [];
+
+        for (let chapter = 1; chapter <= 16; chapter++) {
+            const chapterCues = totalCues.filter(c => c.chapter === chapter);
+            const summary = conllParser.getChapterSummary(chapter);
+
+            // Count Holy Spirit mentions
+            let holySpiritMentions = 0;
+            const hsCharacter = conllParser.characters.get('Holy Spirit');
+            if (hsCharacter) {
+                holySpiritMentions = hsCharacter.occurrences.filter(o => o.chapter === chapter).length;
+            }
+
+            // Count cues by type
+            const cueCounts = {};
+            cueTypes.forEach(type => {
+                cueCounts[type] = chapterCues.filter(c => c.type === type).length;
+            });
+
+            chapterStats.push({
+                chapter,
+                verses: summary ? summary.verses : 0,
+                sentences: summary ? summary.sentences : 0,
+                characters: summary ? summary.characters.length : 0,
+                holySpiritMentions,
+                totalCues: chapterCues.length,
+                cueCounts
+            });
+        }
+
+        // Calculate totals
+        const totals = {
+            verses: chapterStats.reduce((sum, s) => sum + s.verses, 0),
+            sentences: chapterStats.reduce((sum, s) => sum + s.sentences, 0),
+            holySpiritMentions: chapterStats.reduce((sum, s) => sum + s.holySpiritMentions, 0),
+            totalCues: chapterStats.reduce((sum, s) => sum + s.totalCues, 0),
+            cueCounts: {}
+        };
+        cueTypes.forEach(type => {
+            totals.cueCounts[type] = chapterStats.reduce((sum, s) => sum + s.cueCounts[type], 0);
+        });
+
+        // Generate HTML
+        let html = `
+            <div class="chapter-overview">
+                <h3>Gospel of Mark - Complete Chapter Analysis</h3>
+
+                <div class="overview-summary">
+                    <div class="summary-card">
+                        <div class="summary-value">${totals.verses}</div>
+                        <div class="summary-label">Total Verses</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">${totals.sentences}</div>
+                        <div class="summary-label">Sentences</div>
+                    </div>
+                    <div class="summary-card holy-spirit">
+                        <div class="summary-value">${totals.holySpiritMentions}</div>
+                        <div class="summary-label">Holy Spirit Mentions</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">${totals.totalCues}</div>
+                        <div class="summary-label">Attentional Cues</div>
+                    </div>
+                </div>
+
+                <h4>Cue Distribution by Chapter</h4>
+                <div class="overview-table-container">
+                    <table class="overview-table">
+                        <thead>
+                            <tr>
+                                <th>Ch.</th>
+                                <th>Verses</th>
+                                <th class="hs-col" title="Holy Spirit Mentions">HS</th>
+                                <th class="cue-col primacy" title="Primacy Effect">Pri</th>
+                                <th class="cue-col causal" title="Causal Implication">Cau</th>
+                                <th class="cue-col focalization" title="Focalization Shift">Foc</th>
+                                <th class="cue-col absence" title="Conspicuous Absence">Abs</th>
+                                <th class="cue-col prolepsis" title="Prolepsis">Pro</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        chapterStats.forEach(stat => {
+            const isCurrentChapter = stat.chapter === this.currentChapter;
+            const hasHolySpirit = stat.holySpiritMentions > 0;
+
+            html += `
+                <tr class="${isCurrentChapter ? 'current-chapter' : ''} ${hasHolySpirit ? 'has-holy-spirit' : ''}"
+                    data-chapter="${stat.chapter}" style="cursor: pointer;">
+                    <td class="chapter-num">${stat.chapter}</td>
+                    <td>${stat.verses}</td>
+                    <td class="hs-col ${stat.holySpiritMentions > 0 ? 'highlighted' : ''}">${stat.holySpiritMentions || '-'}</td>
+                    <td class="cue-col">${stat.cueCounts.primacy || '-'}</td>
+                    <td class="cue-col">${stat.cueCounts.causal || '-'}</td>
+                    <td class="cue-col">${stat.cueCounts.focalization || '-'}</td>
+                    <td class="cue-col">${stat.cueCounts.absence || '-'}</td>
+                    <td class="cue-col">${stat.cueCounts.prolepsis || '-'}</td>
+                    <td class="total-col">${stat.totalCues}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                        </tbody>
+                        <tfoot>
+                            <tr class="totals-row">
+                                <td><strong>Total</strong></td>
+                                <td><strong>${totals.verses}</strong></td>
+                                <td class="hs-col"><strong>${totals.holySpiritMentions}</strong></td>
+                                <td class="cue-col"><strong>${totals.cueCounts.primacy}</strong></td>
+                                <td class="cue-col"><strong>${totals.cueCounts.causal}</strong></td>
+                                <td class="cue-col"><strong>${totals.cueCounts.focalization}</strong></td>
+                                <td class="cue-col"><strong>${totals.cueCounts.absence}</strong></td>
+                                <td class="cue-col"><strong>${totals.cueCounts.prolepsis}</strong></td>
+                                <td class="total-col"><strong>${totals.totalCues}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="overview-legend">
+                    <h4>Cue Type Legend</h4>
+                    <div class="legend-items">
+                        <span class="legend-item"><span class="legend-color primacy"></span> Pri = Primacy Effect</span>
+                        <span class="legend-item"><span class="legend-color causal"></span> Cau = Causal Implication</span>
+                        <span class="legend-item"><span class="legend-color focalization"></span> Foc = Focalization Shift</span>
+                        <span class="legend-item"><span class="legend-color absence"></span> Abs = Conspicuous Absence</span>
+                        <span class="legend-item"><span class="legend-color prolepsis"></span> Pro = Prolepsis</span>
+                    </div>
+                    <p class="legend-note">Click on a row to navigate to that chapter. HS = Holy Spirit mentions.</p>
+                </div>
+            </div>
+        `;
+
+        overviewTab.innerHTML = html;
+
+        // Add click handlers for chapter navigation
+        overviewTab.querySelectorAll('tr[data-chapter]').forEach(row => {
+            row.addEventListener('click', () => {
+                const chapter = parseInt(row.dataset.chapter);
+                if (window.narratologyApp) {
+                    window.narratologyApp.navigateToChapter(chapter);
+                }
+            });
+        });
     }
 
     /**

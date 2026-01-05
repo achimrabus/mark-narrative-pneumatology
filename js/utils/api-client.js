@@ -686,6 +686,10 @@ Respond in JSON format with pattern analysis.`;
 
             document.body.appendChild(modal);
 
+            // Prevent body scroll when modal is open
+            const originalOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+
             const providerSelect = document.getElementById('provider-select');
             const modelSelect = document.getElementById('model-select');
             const input = document.getElementById('api-key-input');
@@ -695,6 +699,58 @@ Respond in JSON format with pattern analysis.`;
             const cancelBtn = document.getElementById('cancel-api-config');
             const keyStatus = document.getElementById('api-key-status');
             const modelStatus = document.getElementById('model-status');
+
+            // Get all focusable elements for tab trapping
+            const focusableElements = modal.querySelectorAll(
+                'button, select, input, [tabindex]:not([tabindex="-1"])'
+            );
+            const firstFocusable = focusableElements[0];
+            const lastFocusable = focusableElements[focusableElements.length - 1];
+
+            // Close modal helper function
+            const closeModal = (result = null) => {
+                document.body.style.overflow = originalOverflow;
+                document.removeEventListener('keydown', handleKeyDown);
+                if (modal.parentNode) {
+                    document.body.removeChild(modal);
+                }
+                resolve(result);
+            };
+
+            // Handle keyboard events
+            const handleKeyDown = (e) => {
+                // Escape key closes modal
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeModal(null);
+                    return;
+                }
+
+                // Tab key trapping
+                if (e.key === 'Tab') {
+                    if (e.shiftKey) {
+                        // Shift+Tab: if on first element, go to last
+                        if (document.activeElement === firstFocusable) {
+                            e.preventDefault();
+                            lastFocusable.focus();
+                        }
+                    } else {
+                        // Tab: if on last element, go to first
+                        if (document.activeElement === lastFocusable) {
+                            e.preventDefault();
+                            firstFocusable.focus();
+                        }
+                    }
+                }
+
+                // Enter key on input triggers validation
+                if (e.key === 'Enter' && document.activeElement === input) {
+                    e.preventDefault();
+                    validateAndFetchModels();
+                }
+            };
+
+            document.addEventListener('keydown', handleKeyDown);
 
             // Update model dropdown
             const updateModelDropdown = (models, selectedModel = null) => {
@@ -766,13 +822,6 @@ Respond in JSON format with pattern analysis.`;
 
             validateBtn.addEventListener('click', validateAndFetchModels);
 
-            // Also validate on Enter key in input
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    validateAndFetchModels();
-                }
-            });
-
             // Refresh models button
             refreshBtn.addEventListener('click', async () => {
                 const providerId = providerSelect.value;
@@ -811,8 +860,7 @@ Respond in JSON format with pattern analysis.`;
                     this.setApiKey(key, selectedProvider);
                     this.setModel(selectedModel);
 
-                    document.body.removeChild(modal);
-                    resolve({ provider: selectedProvider, model: selectedModel, key: key });
+                    closeModal({ provider: selectedProvider, model: selectedModel, key: key });
                 } else {
                     keyStatus.textContent = 'Please enter an API key';
                     keyStatus.className = 'help-text error';
@@ -821,10 +869,17 @@ Respond in JSON format with pattern analysis.`;
             });
 
             cancelBtn.addEventListener('click', () => {
-                document.body.removeChild(modal);
-                resolve(null);
+                closeModal(null);
             });
 
+            // Also close when clicking outside the modal content
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(null);
+                }
+            });
+
+            // Focus on first input after modal opens
             setTimeout(() => input.focus(), 100);
         });
     }
