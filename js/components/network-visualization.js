@@ -489,6 +489,7 @@ class NetworkVisualization {
 
         // Fade non-matching nodes
         this.g.selectAll('.node').each(function(d) {
+            if (!d) return;
             const matches = targetCharacters.includes(d.name);
             d3.select(this).transition()
                 .duration(300)
@@ -497,8 +498,12 @@ class NetworkVisualization {
 
         // Fade links not connected to matching nodes
         this.g.selectAll('.link').each(function(d) {
-            const sourceMatches = targetCharacters.includes(d.source.name || d.source);
-            const targetMatches = targetCharacters.includes(d.target.name || d.target);
+            if (!d || !d.source || !d.target) return;
+            // Handle both object references (after simulation) and string IDs (before simulation)
+            const sourceName = typeof d.source === 'object' ? d.source.name || d.source.id : d.source;
+            const targetName = typeof d.target === 'object' ? d.target.name || d.target.id : d.target;
+            const sourceMatches = targetCharacters.includes(sourceName);
+            const targetMatches = targetCharacters.includes(targetName);
             d3.select(this).transition()
                 .duration(300)
                 .style('opacity', (sourceMatches || targetMatches) ? 0.6 : 0.1);
