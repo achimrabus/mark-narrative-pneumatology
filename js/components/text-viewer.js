@@ -243,12 +243,53 @@ class TextViewer {
     }
 
     /**
+     * Get cue type display name
+     * @param {string} type - Cue type key
+     * @returns {string} Display name
+     */
+    getCueTypeName(type) {
+        const names = {
+            primacy: 'Primacy Effect',
+            causal: 'Causal Implication',
+            focalization: 'Focalization Shift',
+            absence: 'Conspicuous Absence',
+            prolepsis: 'Prolepsis'
+        };
+        return names[type] || type.charAt(0).toUpperCase() + type.slice(1);
+    }
+
+    /**
+     * Get short description for cue type
+     * @param {string} type - Cue type key
+     * @returns {string} Short description
+     */
+    getCueShortDesc(type) {
+        const descriptions = {
+            primacy: 'Early mention establishing importance',
+            causal: 'Attribution of action to a character',
+            focalization: 'Change in narrative perspective',
+            absence: 'Notable omission of expected elements',
+            prolepsis: 'Forward reference to future action'
+        };
+        return descriptions[type] || '';
+    }
+
+    /**
      * Display chapter summary
      * @param {number} chapter - Chapter number
      */
     displayChapterSummary(chapter) {
         const summary = conllParser.getChapterSummary(chapter);
         if (!summary) return;
+
+        // Group cues by type for summary
+        const cuesByType = {};
+        summary.cues.forEach(cue => {
+            if (!cuesByType[cue.type]) {
+                cuesByType[cue.type] = [];
+            }
+            cuesByType[cue.type].push(cue);
+        });
 
         const details = document.getElementById('text-details');
         details.innerHTML = `
@@ -273,18 +314,30 @@ class TextViewer {
             </div>
             <div class="character-list">
                 <h4>Characters Mentioned</h4>
-                ${summary.characters.map(char => 
+                ${summary.characters.map(char =>
                     `<span class="character-tag" data-character="${char}">${char}</span>`
                 ).join('')}
             </div>
-            <div class="cue-list">
-                <h4>Attentional Cues</h4>
-                ${summary.cues.map(cue => 
-                    `<div class="cue-item ${cue.type}">
-                        <strong>${cue.type}:</strong> ${cue.description}
-                        <small>(${cue.chapter}:${cue.verse})</small>
-                    </div>`
-                ).join('')}
+            <div class="cue-summary">
+                <h4>Attentional Cues by Type</h4>
+                ${Object.entries(cuesByType).map(([type, cues]) => `
+                    <div class="cue-type-summary">
+                        <div class="cue-type-header">
+                            <span class="cue-type-badge ${type}">${this.getCueTypeName(type)}</span>
+                            <span class="cue-count">(${cues.length})</span>
+                            <span class="cue-help-icon" title="${this.getCueShortDesc(type)}">?</span>
+                        </div>
+                        <div class="cue-type-desc">${this.getCueShortDesc(type)}</div>
+                        <ul class="cue-verse-list">
+                            ${cues.slice(0, 5).map(cue => `
+                                <li class="cue-verse-item" data-verse="${cue.verse}">
+                                    ${this.currentChapter}:${cue.verse}
+                                </li>
+                            `).join('')}
+                            ${cues.length > 5 ? `<li class="cue-more">... and ${cues.length - 5} more</li>` : ''}
+                        </ul>
+                    </div>
+                `).join('')}
             </div>
         `;
 
@@ -292,6 +345,13 @@ class TextViewer {
         details.querySelectorAll('.character-tag').forEach(tag => {
             tag.addEventListener('click', () => {
                 this.highlightCharacter(tag.dataset.character);
+            });
+        });
+
+        // Add click handlers for cue verse links
+        details.querySelectorAll('.cue-verse-item').forEach(item => {
+            item.addEventListener('click', () => {
+                this.highlightVerse(this.currentChapter, parseInt(item.dataset.verse));
             });
         });
     }

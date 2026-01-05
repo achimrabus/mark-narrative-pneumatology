@@ -664,3 +664,465 @@
     padding: 0.5rem 1rem;
     display: inline-block;
 }
+
+/* Cue Type Tooltip Styles */
+.cue-type-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cue-help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #6c757d;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: help;
+    position: relative;
+}
+
+.cue-help-icon:hover {
+    background: #495057;
+}
+
+.cue-help-icon .cue-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 350px;
+    max-width: 90vw;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    padding: 1rem;
+    z-index: 1000;
+    text-align: left;
+    margin-bottom: 8px;
+}
+
+.cue-help-icon:hover .cue-tooltip {
+    display: block;
+}
+
+.cue-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px;
+    border-style: solid;
+    border-color: white transparent transparent transparent;
+}
+
+.cue-tooltip-content {
+    font-weight: normal;
+    color: #212529;
+}
+
+.cue-tooltip-header {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.cue-tooltip-body {
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.cue-tooltip-body p {
+    margin: 0 0 0.75rem 0;
+}
+
+.cue-examples {
+    margin: 0.75rem 0;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.cue-examples strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #495057;
+}
+
+.cue-examples ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.8rem;
+}
+
+.cue-examples li {
+    margin-bottom: 0.25rem;
+    color: #6c757d;
+}
+
+.cue-relevance {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #dee2e6;
+    color: #28a745;
+    font-size: 0.8rem;
+}
+
+/* Cue type section styling */
+.cue-type-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.cue-type-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+}
+
+.cue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.cue-item {
+    background: white;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid;
+}
+
+.cue-item.primacy { border-left-color: #f39c12; }
+.cue-item.causal { border-left-color: #9b59b6; }
+.cue-item.focalization { border-left-color: #3498db; }
+.cue-item.absence { border-left-color: #e74c3c; }
+.cue-item.prolepsis { border-left-color: #1abc9c; }
+
+.cue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.cue-location {
+    font-weight: 600;
+    color: #495057;
+}
+
+.cue-confidence {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.cue-explanation {
+    color: #212529;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Pattern section styling */
+.pattern-section {
+    margin-bottom: 1.5rem;
+}
+
+.pattern-section h5 {
+    margin: 0 0 0.75rem 0;
+    color: #2c3e50;
+}
+
+.pattern-list {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.pattern-list li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.raw-analysis .pattern-text {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    line-height: 1.6;
+}
+
+.raw-analysis .pattern-text h3,
+.raw-analysis .pattern-text h4,
+.raw-analysis .pattern-text h5 {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.raw-analysis .pattern-text ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+/* Character card styling */
+.character-analysis {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.character-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.2s;
+}
+
+.character-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.character-card.holy-spirit {
+    border-color: #ff6b6b;
+    background: linear-gradient(135deg, #fff5f5 0%, white 100%);
+}
+
+.character-card h4 {
+    margin: 0 0 0.75rem 0;
+    color: #2c3e50;
+}
+
+.character-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.character-stats .stat {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+.stat-label {
+    color: #6c757d;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #212529;
+}
+
+/* Holy Spirit analysis styling */
+.holy-spirit-analysis {
+    padding: 1rem;
+}
+
+.holy-spirit-summary {
+    background: linear-gradient(135deg, #fff5f5 0%, white 100%);
+    border: 1px solid #ff6b6b;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.hs-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.hs-occurrences, .hs-cues {
+    margin-top: 1rem;
+}
+
+.hs-occurrences h5, .hs-cues h5 {
+    margin: 0 0 0.5rem 0;
+    color: #2c3e50;
+}
+
+.hs-occurrences ul, .hs-cues ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.hs-occurrences li, .hs-cues li {
+    margin-bottom: 0.25rem;
+}
+
+/* Text Viewer Cue Summary Styles */
+.cue-summary {
+    margin-top: 1rem;
+}
+
+.cue-summary h4 {
+    margin: 0 0 0.75rem 0;
+    color: #2c3e50;
+}
+
+.cue-type-summary {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.cue-type-summary .cue-type-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.cue-type-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+}
+
+.cue-type-badge.primacy { background: #f39c12; }
+.cue-type-badge.causal { background: #9b59b6; }
+.cue-type-badge.focalization { background: #3498db; }
+.cue-type-badge.absence { background: #e74c3c; }
+.cue-type-badge.prolepsis { background: #1abc9c; }
+
+.cue-count {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.cue-type-desc {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.cue-verse-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.cue-verse-item {
+    display: inline-block;
+    padding: 0.15rem 0.4rem;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cue-verse-item:hover {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.cue-more {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    z-index: 2000;
+    animation: slideIn 0.3s ease;
+}
+
+.notification.success {
+    background: #28a745;
+    color: white;
+}
+
+.notification.error {
+    background: #dc3545;
+    color: white;
+}
+
+.notification.warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.notification.info {
+    background: #17a2b8;
+    color: white;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Analysis loading spinner */
+.analysis-loading {
+    text-align: center;
+    padding: 2rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #dee2e6;
+    border-top-color: #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* No results styling */
+.no-results {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+/* Analysis placeholder */
+.analysis-placeholder {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+.analysis-placeholder h3 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}

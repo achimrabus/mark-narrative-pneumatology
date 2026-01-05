@@ -320,11 +320,73 @@ class AnalysisPanel {
     }
 
     /**
+     * Get cue type display name
+     * @param {string} type - Cue type key
+     * @returns {string} Display name
+     */
+    getCueTypeName(type) {
+        const names = {
+            primacy: 'Primacy Effect',
+            causal: 'Causal Implication',
+            focalization: 'Focalization Shift',
+            absence: 'Conspicuous Absence',
+            prolepsis: 'Prolepsis'
+        };
+        return names[type] || type.charAt(0).toUpperCase() + type.slice(1);
+    }
+
+    /**
+     * Get tooltip HTML for a cue type
+     * @param {string} type - Cue type key
+     * @returns {string} Tooltip HTML
+     */
+    getCueTooltipHTML(type) {
+        // Use the global function if available
+        if (window.CONSTANTS && window.CONSTANTS.getCueTooltipHTML) {
+            return window.CONSTANTS.getCueTooltipHTML(type);
+        }
+
+        // Fallback explanations
+        const explanations = {
+            primacy: {
+                name: 'Primacy Effect',
+                desc: 'Early mention establishing character importance. First impressions influence how readers track and interpret characters throughout the narrative.'
+            },
+            causal: {
+                name: 'Causal Implication',
+                desc: 'Attribution of action or influence to a character. Events are explained as caused by a character who may not be physically present.'
+            },
+            focalization: {
+                name: 'Focalization Shift',
+                desc: 'Change in narrative perspective. The narrator grants access to a character\'s perception or viewpoint.'
+            },
+            absence: {
+                name: 'Conspicuous Absence',
+                desc: 'Notable omission of expected elements. When expected characters or actions are missing, readers notice and construct explanations.'
+            },
+            prolepsis: {
+                name: 'Prolepsis',
+                desc: 'Forward reference anticipating future action. Creates expectation and keeps characters in reader awareness.'
+            }
+        };
+
+        const exp = explanations[type];
+        if (!exp) return '';
+
+        return `
+            <div class="cue-tooltip-content">
+                <div class="cue-tooltip-header"><strong>${exp.name}</strong></div>
+                <div class="cue-tooltip-body"><p>${exp.desc}</p></div>
+            </div>
+        `;
+    }
+
+    /**
      * Display attentional cues
      */
     displayCues() {
         const cuesTab = document.getElementById('cues-tab');
-        
+
         if (!this.analysisResults.cues || this.analysisResults.cues.length === 0) {
             cuesTab.innerHTML = `
                 <div class="no-results">
@@ -344,29 +406,44 @@ class AnalysisPanel {
         });
 
         let html = '<div class="cues-analysis">';
-        
+
         for (const [type, cues] of Object.entries(cuesByType)) {
+            const tooltipHTML = this.getCueTooltipHTML(type);
+            const typeName = this.getCueTypeName(type);
+
             html += `
                 <div class="cue-type-section">
-                    <h4>${type.charAt(0).toUpperCase() + type.slice(1)} Cues (${cues.length})</h4>
+                    <h4>
+                        <span class="cue-type-header">
+                            ${typeName} Cues (${cues.length})
+                            <span class="cue-help-icon" title="What is ${typeName}?">?
+                                <span class="cue-tooltip">${tooltipHTML}</span>
+                            </span>
+                        </span>
+                    </h4>
                     <div class="cue-list">
             `;
-            
+
             cues.forEach(cue => {
+                // Handle both AI-detected cues and parser-detected cues
+                const location = cue.location || `Verse ${cue.verse || 'N/A'}`;
+                const confidence = cue.confidence ? `Confidence: ${(cue.confidence * 100).toFixed(1)}%` : '';
+                const explanation = cue.explanation || cue.description || 'Detected by pattern matching';
+
                 html += `
                     <div class="cue-item ${type}">
                         <div class="cue-header">
-                            <span class="cue-location">${cue.location}</span>
-                            <span class="cue-confidence">Confidence: ${(cue.confidence * 100).toFixed(1)}%</span>
+                            <span class="cue-location">${this.escapeHtml(location)}</span>
+                            ${confidence ? `<span class="cue-confidence">${confidence}</span>` : ''}
                         </div>
-                        <div class="cue-explanation">${cue.explanation}</div>
+                        <div class="cue-explanation">${this.escapeHtml(explanation)}</div>
                     </div>
                 `;
             });
-            
+
             html += '</div></div>';
         }
-        
+
         html += '</div>';
         cuesTab.innerHTML = html;
     }
@@ -442,7 +519,7 @@ class AnalysisPanel {
      */
     displayPatterns() {
         const patternsTab = document.getElementById('patterns-tab');
-        
+
         if (!this.analysisResults.patterns) {
             patternsTab.innerHTML = `
                 <div class="no-results">
@@ -452,13 +529,170 @@ class AnalysisPanel {
             return;
         }
 
-        // Display pattern analysis results
+        // Parse the pattern response (it may be raw text or structured)
+        const patterns = this.parsePatternResponse(this.analysisResults.patterns);
+
         let html = '<div class="patterns-analysis">';
         html += '<h4>Identified Narrative Patterns</h4>';
-        html += '<p>Pattern analysis results will be displayed here.</p>';
+
+        if (patterns.structured) {
+            // Render structured pattern data
+            if (patterns.characterIntroduction && patterns.characterIntroduction.length > 0) {
+                html += `
+                    <div class="pattern-section">
+                        <h5>Character Introduction Patterns</h5>
+                        <ul class="pattern-list">
+                            ${patterns.characterIntroduction.map(p => `<li>${this.escapeHtml(p)}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (patterns.sceneTransitions && patterns.sceneTransitions.length > 0) {
+                html += `
+                    <div class="pattern-section">
+                        <h5>Scene Transition Patterns</h5>
+                        <ul class="pattern-list">
+                            ${patterns.sceneTransitions.map(p => `<li>${this.escapeHtml(p)}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (patterns.attentionalCues && patterns.attentionalCues.length > 0) {
+                html += `
+                    <div class="pattern-section">
+                        <h5>Attentional Cue Distribution</h5>
+                        <ul class="pattern-list">
+                            ${patterns.attentionalCues.map(p => `<li>${this.escapeHtml(p)}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (patterns.narrativeRhythm && patterns.narrativeRhythm.length > 0) {
+                html += `
+                    <div class="pattern-section">
+                        <h5>Narrative Rhythm</h5>
+                        <ul class="pattern-list">
+                            ${patterns.narrativeRhythm.map(p => `<li>${this.escapeHtml(p)}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (patterns.other && patterns.other.length > 0) {
+                html += `
+                    <div class="pattern-section">
+                        <h5>Additional Observations</h5>
+                        <ul class="pattern-list">
+                            ${patterns.other.map(p => `<li>${this.escapeHtml(p)}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+        } else {
+            // Render raw text response with formatting
+            html += `
+                <div class="pattern-section raw-analysis">
+                    <div class="pattern-text">${this.formatAnalysisText(patterns.raw)}</div>
+                </div>
+            `;
+        }
+
         html += '</div>';
-        
         patternsTab.innerHTML = html;
+    }
+
+    /**
+     * Parse pattern recognition API response
+     * @param {Object|string} response - API response
+     * @returns {Object} Parsed patterns
+     */
+    parsePatternResponse(response) {
+        try {
+            // Extract content from normalized response
+            let content = '';
+            if (response && response.content) {
+                content = response.content;
+            } else if (response && response.choices && response.choices[0]) {
+                content = response.choices[0].message.content;
+            } else if (typeof response === 'string') {
+                content = response;
+            }
+
+            // Try to extract JSON from the response
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                return {
+                    structured: true,
+                    characterIntroduction: parsed.character_introduction || parsed.characterIntroduction || [],
+                    sceneTransitions: parsed.scene_transitions || parsed.sceneTransitions || [],
+                    attentionalCues: parsed.attentional_cues || parsed.attentionalCues || [],
+                    narrativeRhythm: parsed.narrative_rhythm || parsed.narrativeRhythm || [],
+                    other: parsed.other || parsed.observations || []
+                };
+            }
+
+            // Return raw text if not JSON
+            return {
+                structured: false,
+                raw: content
+            };
+        } catch (error) {
+            console.error('Error parsing pattern response:', error);
+            return {
+                structured: false,
+                raw: typeof response === 'string' ? response : JSON.stringify(response, null, 2)
+            };
+        }
+    }
+
+    /**
+     * Format analysis text for display (convert markdown-like formatting)
+     * @param {string} text - Raw text
+     * @returns {string} Formatted HTML
+     */
+    formatAnalysisText(text) {
+        if (!text) return '<p>No analysis available.</p>';
+
+        // Escape HTML first
+        let formatted = this.escapeHtml(text);
+
+        // Convert markdown-style formatting
+        formatted = formatted
+            // Headers
+            .replace(/^### (.+)$/gm, '<h5>$1</h5>')
+            .replace(/^## (.+)$/gm, '<h4>$1</h4>')
+            .replace(/^# (.+)$/gm, '<h3>$1</h3>')
+            // Bold
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            // Italic
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            // Lists
+            .replace(/^- (.+)$/gm, '<li>$1</li>')
+            .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+            // Paragraphs
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+
+        // Wrap list items
+        formatted = formatted.replace(/(<li>.*<\/li>\s*)+/g, '<ul>$&</ul>');
+
+        return `<p>${formatted}</p>`;
+    }
+
+    /**
+     * Escape HTML special characters
+     * @param {string} text - Raw text
+     * @returns {string} Escaped text
+     */
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     /**

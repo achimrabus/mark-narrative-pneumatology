@@ -272,58 +272,144 @@ class CONLLParser {
     }
 
     /**
+     * Normalize Greek text by removing diacritics/accents for matching
+     * @param {string} text - Greek text
+     * @returns {string} Normalized text (lowercase, no diacritics)
+     */
+    normalizeGreek(text) {
+        if (!text) return '';
+        // NFD decomposition separates base characters from diacritics
+        // Then remove combining marks (accents, breathing marks, etc.)
+        return text.normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')  // Combining diacritical marks
+            .replace(/[\u1FBF\u1FC0\u1FC1\u1FCD\u1FCE\u1FCF\u1FDD\u1FDE\u1FDF\u1FED\u1FEE\u1FEF\u1FFD\u1FFE]/g, '') // Greek-specific
+            .toLowerCase();
+    }
+
+    /**
+     * Check if a lemma matches any of the target lemmas
+     * @param {string} lemma - Token lemma to check
+     * @param {Array} targetLemmas - Array of lemma patterns to match
+     * @returns {boolean} True if matches
+     */
+    lemmaMatches(lemma, targetLemmas) {
+        if (!lemma) return false;
+        const normalizedLemma = this.normalizeGreek(lemma);
+        return targetLemmas.some(target => {
+            const normalizedTarget = this.normalizeGreek(target);
+            return normalizedLemma === normalizedTarget || normalizedLemma.startsWith(normalizedTarget);
+        });
+    }
+
+    /**
      * Identify narrative elements and attentional cues
+     * Uses lemma-based matching with Greek text normalization
      */
     identifyNarrativeElements() {
-        // Define attentional cue patterns
+        // Define attentional cue patterns using lemma forms
+        // Each pattern includes lemma forms and form patterns for robust matching
         const cuePatterns = {
             primacy: {
-                keywords: ['αρχη', 'αρχομαι', 'πρωτος'],
-                description: 'Primacy effect - establishing importance'
+                lemmas: ['ἀρχή', 'ἄρχω', 'ἄρχομαι', 'πρῶτος', 'πρότερος'],
+                formPatterns: ['αρχ', 'πρωτ', 'προτερ'],
+                description: 'Primacy effect - establishing importance through early positioning or explicit first-mention markers'
             },
             causal: {
-                keywords: ['δια', 'εκ', 'απο', 'κατα', 'εν'],
-                description: 'Causal implication - attribution'
+                lemmas: ['διά', 'ἐκ', 'ἀπό', 'κατά', 'ὑπό', 'παρά', 'πρός', 'αἰτία', 'ποιέω'],
+                formPatterns: ['δια', 'εκ', 'απο', 'κατα', 'υπο', 'παρα', 'προς', 'αιτι', 'ποι'],
+                description: 'Causal implication - attribution of action or influence to a character',
+                // Require context for common prepositions
+                contextRequired: ['διά', 'ἐκ', 'ἀπό', 'κατά', 'ὑπό', 'παρά', 'πρός']
             },
             focalization: {
-                keywords: ['ειδον', 'ειδεν', 'οραω', 'βλεπω'],
-                description: 'Focalization shift - perspective change'
+                lemmas: ['ὁράω', 'βλέπω', 'θεωρέω', 'θεάομαι', 'ἐμβλέπω', 'ἀναβλέπω', 'περιβλέπω', 'ἀτενίζω', 'γινώσκω', 'οἶδα'],
+                formPatterns: ['ορα', 'οψ', 'βλεπ', 'θεωρ', 'θεα', 'εμβλεπ', 'αναβλεπ', 'περιβλεπ', 'ατενιζ', 'γινωσκ', 'ειδ', 'ιδ'],
+                description: 'Focalization shift - change in narrative perspective or viewpoint'
             },
             absence: {
-                keywords: ['ου', 'μη', 'ουκ', 'μηδεις'],
-                description: 'Conspicuous absence - negation'
+                lemmas: ['οὐ', 'οὐκ', 'οὐχ', 'μή', 'μηδείς', 'οὐδείς', 'οὔτε', 'μήτε', 'οὐδέ', 'μηδέ'],
+                formPatterns: ['ου', 'ουκ', 'ουχ', 'μη', 'μηδ', 'ουδ', 'ουτε', 'μητε'],
+                description: 'Conspicuous absence - negation or notable omission of expected elements',
+                // These are very common, require special context
+                contextRequired: ['οὐ', 'οὐκ', 'οὐχ', 'μή']
             },
             prolepsis: {
-                keywords: ['μελλω', 'εσομαι', 'ηξει', 'ερχομαι'],
-                description: 'Prolepsis - forward reference'
+                lemmas: ['μέλλω', 'ἔρχομαι', 'ἥκω', 'ἔσομαι', 'γίνομαι', 'ἀποκαλύπτω', 'προλέγω', 'προφητεύω'],
+                formPatterns: ['μελλ', 'ερχ', 'ελευ', 'ηξ', 'εσ', 'γεν', 'αποκαλυπ', 'προλεγ', 'προφητ'],
+                description: 'Prolepsis - forward reference anticipating future action or revelation'
             }
         };
 
-        // Analyze sentences for cues
+        // Initialize cues array
+        this.data.cues = [];
+
+        // Analyze sentences for cues using both lemma and form matching
         for (const sentence of this.data.sentences) {
-            const sentenceText = sentence.tokens.map(t => t.form).join(' ');
-            
             for (const [cueType, pattern] of Object.entries(cuePatterns)) {
-                for (const keyword of pattern.keywords) {
-                    if (sentenceText.includes(keyword)) {
-                        // Store cue information
-                        if (!this.data.cues) {
-                            this.data.cues = [];
+                // Check each token for lemma match
+                for (const token of sentence.tokens) {
+                    let matched = false;
+                    let matchedKeyword = null;
+
+                    // Primary: Lemma-based matching (most accurate)
+                    if (token.lemma && this.lemmaMatches(token.lemma, pattern.lemmas)) {
+                        matched = true;
+                        matchedKeyword = token.lemma;
+
+                        // For context-required patterns, check if this is a significant usage
+                        if (pattern.contextRequired && pattern.contextRequired.some(req =>
+                            this.normalizeGreek(token.lemma) === this.normalizeGreek(req))) {
+                            // Skip common prepositions unless they're near Holy Spirit or significant context
+                            const sentenceText = sentence.tokens.map(t => t.form).join(' ');
+                            const hasHolySpirit = sentence.tokens.some(t =>
+                                t.lemma === 'πνεῦμα' || this.normalizeGreek(t.form).includes('πνευμα'));
+                            const hasSpecialContext = hasHolySpirit ||
+                                sentenceText.includes('θεο') || sentenceText.includes('Ἰησοῦ');
+                            if (!hasSpecialContext) {
+                                matched = false;
+                            }
                         }
-                        
-                        this.data.cues.push({
-                            type: cueType,
-                            keyword: keyword,
-                            sentence: sentence.id,
-                            chapter: sentence.chapter,
-                            verse: sentence.verse,
-                            text: sentenceText,
-                            description: pattern.description
-                        });
+                    }
+
+                    // Fallback: Form-based matching with normalization (for unrecognized lemmas)
+                    if (!matched && token.form) {
+                        const normalizedForm = this.normalizeGreek(token.form);
+                        for (const formPattern of pattern.formPatterns) {
+                            if (normalizedForm.startsWith(formPattern) || normalizedForm.includes(formPattern)) {
+                                matched = true;
+                                matchedKeyword = token.form;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (matched) {
+                        // Avoid duplicates for same sentence/type combination
+                        const existing = this.data.cues.find(c =>
+                            c.sentence === sentence.id &&
+                            c.type === cueType &&
+                            c.keyword === matchedKeyword
+                        );
+
+                        if (!existing) {
+                            this.data.cues.push({
+                                type: cueType,
+                                keyword: matchedKeyword,
+                                form: token.form,
+                                lemma: token.lemma,
+                                sentence: sentence.id,
+                                chapter: sentence.chapter,
+                                verse: sentence.verse,
+                                text: sentence.tokens.map(t => t.form).join(' '),
+                                description: pattern.description
+                            });
+                        }
                     }
                 }
             }
         }
+
+        console.log(`Identified ${this.data.cues.length} attentional cues across all chapters`);
     }
 
     /**
