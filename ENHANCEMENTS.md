@@ -179,6 +179,14 @@ node test-parser.js
 
 ## Changelog
 
+### 2026-01-05
+- ✅ Fixed Network View Reset button and character filter dropdown
+- ✅ Fixed Timeline cue type filter checkboxes (now properly show/hide cue markers)
+- ✅ Fixed Narrative Intensity calculation (was always hitting 100%, now uses unique cue types with reduced weights)
+- ✅ Fixed Run Analysis button delegation to analysis panel
+- ✅ Fixed Analysis Panel container ID binding
+- ✅ Updated Timeline legend to show all 5 cue types with correct colors and filter state
+
 ### 2025-01-05
 - ✅ Tier 1 #1-3: Cue pattern matching, pattern display, cue explanations
 - ✅ Tier 1 #4: Chapter Overview tab with statistics

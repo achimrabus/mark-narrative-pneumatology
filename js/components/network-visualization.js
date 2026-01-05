@@ -447,6 +447,65 @@ class NetworkVisualization {
     }
 
     /**
+     * Reset view to default state
+     */
+    resetView() {
+        // Reset zoom to identity transform
+        this.svg.transition()
+            .duration(750)
+            .call(d3.zoom().transform, d3.zoomIdentity);
+
+        // Clear any character filter
+        this.currentFilter = 'all';
+
+        // Re-render with all nodes visible
+        this.update(this.currentChapter);
+    }
+
+    /**
+     * Filter network by character type
+     * @param {string} filterValue - Filter value ('all', 'spirit', 'jesus', 'disciples')
+     */
+    filterByCharacter(filterValue) {
+        this.currentFilter = filterValue;
+
+        if (filterValue === 'all') {
+            // Show all nodes
+            this.g.selectAll('.node').style('opacity', 1);
+            this.g.selectAll('.link').style('opacity', 0.6);
+            return;
+        }
+
+        // Define character groups
+        const characterGroups = {
+            spirit: ['Holy Spirit'],
+            jesus: ['Jesus'],
+            disciples: ['Peter', 'Andrew', 'James', 'John', 'Philip', 'Bartholomew',
+                       'Matthew', 'Thomas', 'James son of Alphaeus', 'Thaddaeus',
+                       'Simon the Zealot', 'Judas', 'Disciples']
+        };
+
+        const targetCharacters = characterGroups[filterValue] || [];
+
+        // Fade non-matching nodes
+        this.g.selectAll('.node').each(function(d) {
+            const matches = targetCharacters.includes(d.name);
+            d3.select(this).transition()
+                .duration(300)
+                .style('opacity', matches ? 1 : 0.2);
+        });
+
+        // Fade links not connected to matching nodes
+        this.g.selectAll('.link').each(function(d) {
+            const sourceMatches = targetCharacters.includes(d.source.name || d.source);
+            const targetMatches = targetCharacters.includes(d.target.name || d.target);
+            d3.select(this).transition()
+                .duration(300)
+                .style('opacity', (sourceMatches || targetMatches) ? 0.6 : 0.1);
+        });
+    }
+
+    /**
      * Export network data
      * @returns {Object} Network data
      */

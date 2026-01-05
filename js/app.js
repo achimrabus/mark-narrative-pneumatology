@@ -104,8 +104,8 @@ class NarratologyApp {
         // Text view
         this.textView = new TextViewer('text-view', this.data);
 
-        // Analysis view
-        this.analysisView = new AnalysisPanel('analysis-view', this.data);
+        // Analysis view (use inner container ID)
+        this.analysisView = new AnalysisPanel('analysis-panel', this.data);
     }
 
     /**
@@ -182,10 +182,92 @@ class NarratologyApp {
             });
         }
 
+        // Network view controls
+        const resetNetworkBtn = document.getElementById('reset-network');
+        if (resetNetworkBtn) {
+            resetNetworkBtn.addEventListener('click', () => {
+                this.resetNetworkView();
+            });
+        }
+
+        const characterFilter = document.getElementById('character-filter');
+        if (characterFilter) {
+            characterFilter.addEventListener('change', (e) => {
+                this.filterNetworkByCharacter(e.target.value);
+            });
+        }
+
+        // Timeline cue toggles
+        const cueTypes = ['primacy', 'causal', 'focalization', 'absence', 'prolepsis'];
+        cueTypes.forEach(cueType => {
+            const toggle = document.getElementById(`toggle-${cueType}`);
+            if (toggle) {
+                toggle.addEventListener('change', () => {
+                    this.updateTimelineCueFilters();
+                });
+            }
+        });
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             this.handleKeyboardShortcuts(e);
         });
+    }
+
+    /**
+     * Reset network view to default state
+     */
+    resetNetworkView() {
+        // Reset character filter dropdown
+        const characterFilter = document.getElementById('character-filter');
+        if (characterFilter) {
+            characterFilter.value = 'all';
+        }
+
+        // Reset network visualization
+        if (this.networkView) {
+            this.networkView.resetView();
+        }
+    }
+
+    /**
+     * Filter network by character type
+     * @param {string} filterValue - Filter value
+     */
+    filterNetworkByCharacter(filterValue) {
+        if (this.networkView) {
+            this.networkView.filterByCharacter(filterValue);
+        }
+    }
+
+    /**
+     * Update timeline cue filters based on checkbox states
+     */
+    updateTimelineCueFilters() {
+        const cueTypes = ['primacy', 'causal', 'focalization', 'absence', 'prolepsis'];
+        const activeFilters = {};
+
+        cueTypes.forEach(cueType => {
+            const toggle = document.getElementById(`toggle-${cueType}`);
+            activeFilters[cueType] = toggle ? toggle.checked : true;
+        });
+
+        if (this.timelineView) {
+            this.timelineView.setCueFilters(activeFilters);
+        }
+    }
+
+    /**
+     * Navigate to specific chapter
+     * @param {number} chapter - Chapter number
+     */
+    navigateToChapter(chapter) {
+        this.currentChapter = chapter;
+        const selector = document.getElementById('chapter-selector');
+        if (selector) {
+            selector.value = chapter;
+        }
+        this.updateCurrentView();
     }
 
     /**
@@ -305,49 +387,14 @@ class NarratologyApp {
             return;
         }
 
-        try {
-            this.showLoading('Running narratological analysis...');
-            
-            // Get current chapter text - try multiple approaches
-            let chapterText = conllParser.getTextRange(this.currentChapter, 1, 50);
-            
-            // If no text from range, try to get any available text
-            if (!chapterText || chapterText.trim() === '') {
-                if (conllParser.data && conllParser.data.sentences) {
-                    const chapterSentences = conllParser.data.sentences.filter(s => s.chapter === this.currentChapter);
-                    if (chapterSentences.length > 0) {
-                        chapterText = chapterSentences.slice(0, 10).map(s =>
-                            s.tokens.map(t => t.form).join(' ')
-                        ).join(' ');
-                    }
-                }
-                
-                // If still no text, try to get any text at all
-                if (!chapterText || chapterText.trim() === '') {
-                    if (conllParser.data && conllParser.data.sentences && conllParser.data.sentences.length > 0) {
-                        chapterText = conllParser.data.sentences.slice(0, 20).map(s =>
-                            s.tokens.map(t => t.form).join(' ')
-                        ).join(' ');
-                    }
-                }
-            }
-            
-            if (!chapterText || chapterText.trim() === '') {
-                throw new Error('No text available for analysis. Please check if the CONLL data is properly loaded.');
-            }
-            
-            // Run AI analysis
-            const cues = await apiClient.detectCues(chapterText);
-            
-            // Update analysis view
-            this.analysisView.displayResults(cues);
-            
-            this.hideLoading();
-            this.showNotification('Analysis complete', 'success');
-        } catch (error) {
-            console.error('Analysis failed:', error);
-            this.hideLoading();
-            this.showNotification('Analysis failed: ' + error.message, 'error');
+        // Switch to analysis view first
+        this.loadView('analysis');
+
+        // Delegate to analysis panel's runAnalysis method
+        if (this.analysisView && typeof this.analysisView.runAnalysis === 'function') {
+            this.analysisView.runAnalysis();
+        } else {
+            this.showNotification('Analysis panel not initialized', 'error');
         }
     }
 

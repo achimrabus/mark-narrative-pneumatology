@@ -12,7 +12,16 @@ class TimelineVisualization {
         this.currentChapter = 1;
         this.svg = null;
         this.timelineData = [];
-        
+
+        // Cue filter state (all enabled by default)
+        this.cueFilters = {
+            primacy: true,
+            causal: true,
+            focalization: true,
+            absence: true,
+            prolepsis: true
+        };
+
         this.init();
     }
 
@@ -140,31 +149,48 @@ class TimelineVisualization {
     calculateNarrativeIntensity(characters, cues, text) {
         let intensity = 0;
 
-        // Base intensity from character count
-        intensity += Math.min(characters.size / 5, 1) * 0.3;
+        // Base intensity from character count (reduced weight)
+        intensity += Math.min(characters.size / 8, 0.5) * 0.25;
 
-        // Intensity from cues
+        // Filter cues based on active filters and only count unique types
+        const filteredCues = cues.filter(cue => this.cueFilters[cue.type]);
+        const uniqueCueTypes = new Set(filteredCues.map(c => c.type));
+
+        // Intensity from unique cue types (not individual cues)
+        // This prevents verses with many cues from always hitting 100%
         const cueWeights = {
-            primacy: 0.8,
-            causal: 0.9,
-            focalization: 0.7,
-            absence: 0.6,
-            prolepsis: 0.5
+            primacy: 0.15,
+            causal: 0.12,
+            focalization: 0.10,
+            absence: 0.08,
+            prolepsis: 0.10
         };
 
-        for (const cue of cues) {
-            intensity += (cueWeights[cue.type] || 0.5) * 0.4;
+        for (const cueType of uniqueCueTypes) {
+            intensity += cueWeights[cueType] || 0.08;
         }
 
-        // Intensity from text length (longer verses may be more significant)
-        intensity += Math.min(text.length / 100, 1) * 0.2;
+        // Intensity from text length (reduced weight)
+        intensity += Math.min(text.length / 200, 0.5) * 0.15;
 
         // Special boost for Holy Spirit mentions
-        if (text.includes('Πνευμα') || text.includes('Πνευματος')) {
-            intensity += 0.3;
+        if (text.includes('Πνευμα') || text.includes('Πνευματος') ||
+            text.includes('πνευμα') || text.includes('πνεῦμα')) {
+            intensity += 0.25;
         }
 
         return Math.min(intensity, 1);
+    }
+
+    /**
+     * Set cue filters and re-render
+     * @param {Object} filters - Filter object {primacy: bool, causal: bool, ...}
+     */
+    setCueFilters(filters) {
+        this.cueFilters = { ...this.cueFilters, ...filters };
+        // Re-process data to recalculate intensities
+        this.processData(this.currentChapter);
+        this.render();
     }
 
     /**
@@ -350,7 +376,12 @@ class TimelineVisualization {
         };
 
         cueTypes.forEach(cueType => {
-            const cueVerses = this.timelineData.filter(d => 
+            // Skip this cue type if it's filtered out
+            if (!this.cueFilters[cueType]) {
+                return;
+            }
+
+            const cueVerses = this.timelineData.filter(d =>
                 d.cues.some(cue => cue.type === cueType)
             );
 
@@ -428,21 +459,29 @@ class TimelineVisualization {
             .attr('y', 30)
             .text('High');
 
-        // Cue types
-        const cueTypes = [
-            { type: 'primacy', label: 'Primacy' },
-            { type: 'causal', label: 'Causal' },
-            { type: 'holy-spirit', label: 'Holy Spirit' }
+        // Cue types with their colors
+        const cueTypeItems = [
+            { type: 'primacy', label: 'Primacy', color: '#4e79a7' },
+            { type: 'causal', label: 'Causal', color: '#f28e2c' },
+            { type: 'focalization', label: 'Focalization', color: '#e15759' },
+            { type: 'absence', label: 'Absence', color: '#76b7b2' },
+            { type: 'prolepsis', label: 'Prolepsis', color: '#59a14f' },
+            { type: 'holy-spirit', label: 'Holy Spirit', color: '#ff6b6b' }
         ];
 
-        cueTypes.forEach((cue, i) => {
+        cueTypeItems.forEach((cue, i) => {
+            // Check if this cue type is active (holy-spirit is always shown)
+            const isActive = cue.type === 'holy-spirit' || this.cueFilters[cue.type];
+            const opacity = isActive ? 1 : 0.3;
+
             const cueLegend = legend.append('g')
-                .attr('transform', `translate(0, ${50 + i * 20})`);
+                .attr('transform', `translate(0, ${50 + i * 20})`)
+                .style('opacity', opacity);
 
             if (cue.type === 'holy-spirit') {
                 cueLegend.append('path')
                     .attr('d', d3.symbol().type(d3.symbolTriangle).size(50))
-                    .attr('fill', '#ff6b6b')
+                    .attr('fill', cue.color)
                     .attr('transform', 'translate(5, 0)');
             } else {
                 cueLegend.append('rect')
@@ -450,13 +489,13 @@ class TimelineVisualization {
                     .attr('y', -5)
                     .attr('width', 10)
                     .attr('height', 10)
-                    .attr('fill', '#4e79a7');
+                    .attr('fill', cue.color);
             }
 
             cueLegend.append('text')
                 .attr('x', 15)
                 .attr('y', 4)
-                .text(cue.label);
+                .text(cue.label + (isActive ? '' : ' (off)'));
         });
     }
 
