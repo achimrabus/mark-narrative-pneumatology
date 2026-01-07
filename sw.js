@@ -1,28 +1,29 @@
 // Service Worker for Mark's Narrative Pneumatology PWA
-const CACHE_NAME = 'mark-pneumatology-v1';
+const CACHE_NAME = 'mark-pneumatology-v2';
 
-// Files to cache for offline use
+// Files to cache for offline use (relative paths for GitHub Pages compatibility)
 const STATIC_ASSETS = [
-    '/',
-    '/index.html',
-    '/css/main.css',
-    '/css/components.css',
-    '/css/visualizations.css',
-    '/css/enhanced-components.css',
-    '/js/utils/constants.js',
-    '/js/utils/helpers.js',
-    '/js/utils/api-client.js',
-    '/js/data/conll-parser.js',
-    '/js/components/enhanced-search.js',
-    '/js/components/search-integration.js',
-    '/js/components/greek-keyboard.js',
-    '/js/components/network-visualization.js',
-    '/js/components/timeline-visualization.js',
-    '/js/components/text-viewer.js',
-    '/js/components/analysis-panel.js',
-    '/js/app.js',
-    '/mark_complete.conllu',
-    '/manifest.json'
+    './',
+    './index.html',
+    './css/main.css',
+    './css/components.css',
+    './css/visualizations.css',
+    './css/enhanced-components.css',
+    './js/utils/constants.js',
+    './js/utils/helpers.js',
+    './js/utils/api-client.js',
+    './js/data/conll-parser.js',
+    './js/components/enhanced-search.js',
+    './js/components/search-integration.js',
+    './js/components/greek-keyboard.js',
+    './js/components/network-visualization.js',
+    './js/components/timeline-visualization.js',
+    './js/components/text-viewer.js',
+    './js/components/analysis-panel.js',
+    './js/app.js',
+    './mark_complete.conllu',
+    './manifest.json',
+    './icons/icon.png'
 ];
 
 // External resources (CDN) - cache with network-first strategy
@@ -126,7 +127,7 @@ self.addEventListener('fetch', event => {
                     .catch(() => {
                         // Offline fallback for HTML pages
                         if (event.request.headers.get('accept').includes('text/html')) {
-                            return caches.match('/index.html');
+                            return caches.match('./index.html');
                         }
                     });
             })

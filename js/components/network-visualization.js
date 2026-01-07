@@ -62,8 +62,39 @@ class NetworkVisualization {
             .attr('class', 'network-tooltip')
             .style('opacity', 0);
 
+        // Handle window resize (debounced)
+        this.resizeTimeout = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = setTimeout(() => {
+                this.handleResize();
+            }, 250);
+        });
+
+        // Handle orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.handleResize(), 100);
+        });
+
         // Load initial data
         this.update(1);
+    }
+
+    /**
+     * Handle resize event - update force simulation center
+     */
+    handleResize() {
+        const width = this.container.clientWidth || 800;
+        const height = this.container.clientHeight || 600;
+
+        // Update force simulation center
+        this.simulation
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('x', d3.forceX(width / 2).strength(0.05))
+            .force('y', d3.forceY(height / 2).strength(0.05));
+
+        // Restart simulation gently
+        this.simulation.alpha(0.3).restart();
     }
 
     /**

@@ -45,6 +45,20 @@ class TimelineVisualization {
             .attr('class', 'timeline-tooltip')
             .style('opacity', 0);
 
+        // Handle window resize (debounced)
+        this.resizeTimeout = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = setTimeout(() => {
+                this.render();
+            }, 250);
+        });
+
+        // Handle orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.render(), 100);
+        });
+
         // Load initial data
         this.update(1);
     }
