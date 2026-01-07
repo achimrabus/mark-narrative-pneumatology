@@ -520,11 +520,12 @@ Find these cue types:
 4. absence: Notable omissions or gaps
 5. prolepsis: Forward references anticipating future action
 
-Return JSON only:
+Return JSON only (no thinking/reasoning, no <think> tags):
 {"cues":[{"type":"primacy","location":"word/phrase","explanation":"how it works","confidence":0.8}]}`;
 
         console.log('[API] Sending cue detection request (prompt length:', prompt.length, ')...');
-        const response = await this.makeRequest(prompt);
+        // Use higher token limit for analysis (some models use many tokens for "thinking")
+        const response = await this.makeRequest(prompt, { maxTokens: 2000 });
         console.log('[API] Raw response received:', JSON.stringify(response).substring(0, 500));
 
         // Check for empty response
@@ -558,10 +559,10 @@ Text: "${truncatedText}"
 
 Identify: interactions, relationships, power dynamics, narrative roles.
 
-Return JSON:
+Return JSON only (no thinking/reasoning):
 {"relationships":[{"characters":["A","B"],"type":"interaction/implicit","description":"..."}],"roles":{"Jesus":"protagonist"}}`;
 
-        return await this.makeRequest(prompt);
+        return await this.makeRequest(prompt, { maxTokens: 2000 });
     }
 
     /**
@@ -583,10 +584,10 @@ Return JSON:
 
 Patterns to find: character introductions, scene transitions, attentional cues, narrative rhythm.
 
-Return JSON:
+Return JSON only (no thinking/reasoning):
 {"character_introduction":["pattern"],"scene_transitions":["pattern"],"attentional_cues":["observation"],"narrative_rhythm":["observation"]}`;
 
-        return await this.makeRequest(prompt);
+        return await this.makeRequest(prompt, { maxTokens: 2000 });
     }
 
     /**
@@ -616,12 +617,33 @@ Return JSON:
             }
 
             // Remove markdown code blocks if present (LLMs often wrap JSON in ```json ... ```)
+            // Also remove <think>...</think> reasoning blocks (used by GLM and other models)
             let cleanContent = content
                 .replace(/```json\s*/gi, '')
                 .replace(/```\s*/g, '')
+                .replace(/<think>[\s\S]*?<\/think>/gi, '')  // Remove complete thinking blocks
+                .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')  // Remove reasoning blocks
+                .replace(/<analysis>[\s\S]*?<\/analysis>/gi, '')  // Remove analysis blocks
                 .trim();
 
+            // Handle incomplete thinking blocks (model ran out of tokens before closing tag)
+            // Look for JSON that might appear after an unclosed <think> tag
+            if (cleanContent.includes('<think>') && !cleanContent.includes('</think>')) {
+                console.log('[API] Detected incomplete <think> block, looking for JSON after it');
+                // Try to find JSON anywhere in the original content
+                const jsonInContent = content.match(/\{"cues"\s*:\s*\[[\s\S]*?\]\s*\}/);
+                if (jsonInContent) {
+                    cleanContent = jsonInContent[0];
+                    console.log('[API] Found JSON in incomplete response:', cleanContent.substring(0, 200));
+                } else {
+                    // No JSON found - model probably ran out of tokens during thinking
+                    console.warn('[API] Model appears to have run out of tokens during thinking phase');
+                    cleanContent = '';
+                }
+            }
+
             console.log('[API] Clean content preview:', cleanContent.substring(0, 500));
+            console.log('[API] Content length after cleaning:', cleanContent.length);
 
             // Try to find JSON object in the response
             const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
