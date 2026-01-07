@@ -172,24 +172,29 @@ class AnalysisPanel {
 
         try {
             this.showLoading(true);
+            console.log('[Analysis] Starting analysis for chapter', this.currentChapter);
 
             // Get chapter text - try multiple approaches
             let chapterText = conllParser.getTextRange(this.currentChapter, 1, 50);
-            
+            console.log('[Analysis] getTextRange result length:', chapterText?.length || 0);
+
             // If no text from range, try to get any available text
             if (!chapterText || chapterText.trim() === '') {
+                console.log('[Analysis] getTextRange returned empty, trying sentences filter');
                 // Try to get text from the first few sentences of the chapter
                 if (conllParser.data && conllParser.data.sentences) {
                     const chapterSentences = conllParser.data.sentences.filter(s => s.chapter === this.currentChapter);
+                    console.log('[Analysis] Found', chapterSentences.length, 'sentences for chapter', this.currentChapter);
                     if (chapterSentences.length > 0) {
                         chapterText = chapterSentences.slice(0, 10).map(s =>
                             s.tokens.map(t => t.form).join(' ')
                         ).join(' ');
                     }
                 }
-                
+
                 // If still no text, try to get any text at all
                 if (!chapterText || chapterText.trim() === '') {
+                    console.log('[Analysis] Still no text, using first 20 sentences from any chapter');
                     if (conllParser.data && conllParser.data.sentences && conllParser.data.sentences.length > 0) {
                         chapterText = conllParser.data.sentences.slice(0, 20).map(s =>
                             s.tokens.map(t => t.form).join(' ')
@@ -197,10 +202,12 @@ class AnalysisPanel {
                     }
                 }
             }
-            
+
             if (!chapterText || chapterText.trim() === '') {
                 throw new Error('No text available for analysis. Please check if the CONLL data is properly loaded.');
             }
+
+            console.log('[Analysis] Text to analyze (length:', chapterText.length, '):', chapterText.substring(0, 300));
 
             // Run different types of analysis
             const [cues, characters, patterns] = await Promise.all([
@@ -238,9 +245,15 @@ class AnalysisPanel {
      */
     async detectCues(text) {
         try {
-            return await apiClient.detectCues(text);
+            console.log('[Analysis] Calling apiClient.detectCues with text length:', text?.length || 0);
+            const result = await apiClient.detectCues(text);
+            console.log('[Analysis] detectCues returned:', result?.length || 0, 'cues');
+            if (result && result.length > 0) {
+                console.log('[Analysis] First cue sample:', JSON.stringify(result[0]));
+            }
+            return result;
         } catch (error) {
-            console.error('Cue detection failed:', error);
+            console.error('[Analysis] Cue detection failed:', error);
             return [];
         }
     }

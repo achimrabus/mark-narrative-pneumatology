@@ -498,6 +498,9 @@ class APIClient {
      * @returns {Promise<Array>} Detected cues
      */
     async detectCues(text) {
+        console.log('[API] detectCues called with text length:', text?.length || 0);
+        console.log('[API] detectCues text preview:', text?.substring(0, 200));
+
         const prompt = `Analyze this text segment from Mark's Gospel for attentional cues that direct readers to construct character models for background figures, particularly the Holy Spirit.
 
 Text: "${text}"
@@ -510,12 +513,12 @@ Look for these types of cues:
 5. Prolepsis: Forward references that anticipate character action
 
 For each cue found, provide:
-- Type of cue
-- Location (word or phrase)
+- Type of cue (use one of: primacy, causal, focalization, absence, prolepsis)
+- Location (word or phrase from the text)
 - Explanation of how it functions
 - Confidence score (0-1)
 
-Respond in JSON format:
+IMPORTANT: Respond ONLY with valid JSON, no markdown formatting or additional text:
 {
   "cues": [
     {
@@ -527,7 +530,9 @@ Respond in JSON format:
   ]
 }`;
 
+        console.log('[API] Sending cue detection request...');
         const response = await this.makeRequest(prompt);
+        console.log('[API] Raw response received:', JSON.stringify(response).substring(0, 500));
         return this.parseCueResponse(response);
     }
 
@@ -562,17 +567,26 @@ Respond in JSON format with relationship analysis.`;
      * @returns {Promise<Array>} Pattern analysis
      */
     async recognizePatterns(segments) {
+        console.log('[API] recognizePatterns called with', segments?.length || 0, 'segments');
+
         const prompt = `Analyze these narrative segments from Mark's Gospel for recurring patterns and narrative techniques.
 
 Segments: ${segments.map(s => s.text).join('\n\n')}
 
 Identify patterns in:
-1. Character introduction
-2. Scene transitions
-3. Attentional cue distribution
-4. Narrative rhythm
+1. Character introduction - how characters are first mentioned
+2. Scene transitions - how the narrative moves between locations/events
+3. Attentional cue distribution - where focus-directing elements appear
+4. Narrative rhythm - pacing and structural patterns
 
-Respond in JSON format with pattern analysis.`;
+IMPORTANT: Respond ONLY with valid JSON, no markdown formatting:
+{
+  "character_introduction": ["pattern description 1", "pattern description 2"],
+  "scene_transitions": ["pattern description 1"],
+  "attentional_cues": ["observation 1"],
+  "narrative_rhythm": ["observation 1"],
+  "other": ["any additional observations"]
+}`;
 
         return await this.makeRequest(prompt);
     }
@@ -596,23 +610,31 @@ Respond in JSON format with pattern analysis.`;
             }
 
             console.log('[API] Parsing cue response, content length:', content?.length || 0);
-            console.log('[API] Response preview:', content?.substring(0, 500));
+            console.log('[API] Response preview:', content?.substring(0, 800));
 
             if (!content || content.trim() === '') {
                 console.warn('[API] Empty response content');
                 return [];
             }
 
+            // Remove markdown code blocks if present (LLMs often wrap JSON in ```json ... ```)
+            let cleanContent = content
+                .replace(/```json\s*/gi, '')
+                .replace(/```\s*/g, '')
+                .trim();
+
+            console.log('[API] Clean content preview:', cleanContent.substring(0, 500));
+
             // Try to find JSON object in the response
-            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 try {
                     const parsed = JSON.parse(jsonMatch[0]);
-                    console.log('[API] Parsed JSON:', parsed);
+                    console.log('[API] Parsed JSON object:', JSON.stringify(parsed).substring(0, 500));
 
                     // Handle different response structures
                     if (parsed.cues && Array.isArray(parsed.cues)) {
-                        console.log('[API] Found', parsed.cues.length, 'cues');
+                        console.log('[API] Found', parsed.cues.length, 'cues in "cues" key');
                         return parsed.cues;
                     }
                     if (Array.isArray(parsed)) {
@@ -620,20 +642,29 @@ Respond in JSON format with pattern analysis.`;
                         return parsed;
                     }
                     // Maybe cues are nested differently
-                    if (parsed.results || parsed.data || parsed.attentional_cues) {
-                        const cues = parsed.results || parsed.data || parsed.attentional_cues;
+                    if (parsed.results || parsed.data || parsed.attentional_cues || parsed.analysis) {
+                        const cues = parsed.results || parsed.data || parsed.attentional_cues || parsed.analysis;
                         if (Array.isArray(cues)) {
                             console.log('[API] Found cues in alternate key:', cues.length);
                             return cues;
                         }
                     }
+                    // Check if the parsed object itself has cue-like properties
+                    if (parsed.type && (parsed.location || parsed.explanation)) {
+                        console.log('[API] Single cue object detected');
+                        return [parsed];
+                    }
+                    // Return empty array if parsed but no cues found
+                    console.warn('[API] JSON parsed but no cues array found. Keys:', Object.keys(parsed));
+                    return [];
                 } catch (jsonError) {
-                    console.warn('[API] JSON parse failed:', jsonError.message);
+                    console.warn('[API] JSON object parse failed:', jsonError.message);
+                    console.warn('[API] Attempted to parse:', jsonMatch[0].substring(0, 300));
                 }
             }
 
             // Try to find JSON array directly
-            const arrayMatch = content.match(/\[[\s\S]*\]/);
+            const arrayMatch = cleanContent.match(/\[[\s\S]*?\]/);
             if (arrayMatch) {
                 try {
                     const parsed = JSON.parse(arrayMatch[0]);
@@ -642,11 +673,11 @@ Respond in JSON format with pattern analysis.`;
                         return parsed;
                     }
                 } catch (e) {
-                    console.warn('[API] Array parse failed');
+                    console.warn('[API] Array parse failed:', e.message);
                 }
             }
 
-            console.warn('[API] Could not parse cues from response');
+            console.warn('[API] Could not parse cues from response. Raw content type:', typeof content);
             return [];
         } catch (error) {
             console.error('[API] Error parsing cue response:', error);
