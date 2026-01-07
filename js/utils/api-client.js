@@ -589,19 +589,67 @@ Respond in JSON format with pattern analysis.`;
                 content = response.choices[0].message.content;
             } else if (response.content) {
                 content = response.content;
-            } else {
+            } else if (typeof response === 'string') {
                 content = response;
+            } else {
+                content = JSON.stringify(response);
             }
 
+            console.log('[API] Parsing cue response, content length:', content?.length || 0);
+            console.log('[API] Response preview:', content?.substring(0, 500));
+
+            if (!content || content.trim() === '') {
+                console.warn('[API] Empty response content');
+                return [];
+            }
+
+            // Try to find JSON object in the response
             const jsonMatch = content.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-                const parsed = JSON.parse(jsonMatch[0]);
-                return parsed.cues || [];
+                try {
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    console.log('[API] Parsed JSON:', parsed);
+
+                    // Handle different response structures
+                    if (parsed.cues && Array.isArray(parsed.cues)) {
+                        console.log('[API] Found', parsed.cues.length, 'cues');
+                        return parsed.cues;
+                    }
+                    if (Array.isArray(parsed)) {
+                        console.log('[API] Response is array with', parsed.length, 'items');
+                        return parsed;
+                    }
+                    // Maybe cues are nested differently
+                    if (parsed.results || parsed.data || parsed.attentional_cues) {
+                        const cues = parsed.results || parsed.data || parsed.attentional_cues;
+                        if (Array.isArray(cues)) {
+                            console.log('[API] Found cues in alternate key:', cues.length);
+                            return cues;
+                        }
+                    }
+                } catch (jsonError) {
+                    console.warn('[API] JSON parse failed:', jsonError.message);
+                }
             }
 
+            // Try to find JSON array directly
+            const arrayMatch = content.match(/\[[\s\S]*\]/);
+            if (arrayMatch) {
+                try {
+                    const parsed = JSON.parse(arrayMatch[0]);
+                    if (Array.isArray(parsed)) {
+                        console.log('[API] Found array directly with', parsed.length, 'items');
+                        return parsed;
+                    }
+                } catch (e) {
+                    console.warn('[API] Array parse failed');
+                }
+            }
+
+            console.warn('[API] Could not parse cues from response');
             return [];
         } catch (error) {
-            console.error('Error parsing cue response:', error);
+            console.error('[API] Error parsing cue response:', error);
             return [];
         }
     }

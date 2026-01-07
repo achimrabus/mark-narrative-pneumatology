@@ -628,27 +628,58 @@ class AnalysisPanel {
                 content = response;
             }
 
-            // Try to extract JSON from the response
-            const jsonMatch = content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                const parsed = JSON.parse(jsonMatch[0]);
-                return {
-                    structured: true,
-                    characterIntroduction: parsed.character_introduction || parsed.characterIntroduction || [],
-                    sceneTransitions: parsed.scene_transitions || parsed.sceneTransitions || [],
-                    attentionalCues: parsed.attentional_cues || parsed.attentionalCues || [],
-                    narrativeRhythm: parsed.narrative_rhythm || parsed.narrativeRhythm || [],
-                    other: parsed.other || parsed.observations || []
-                };
+            console.log('[Analysis] Parsing pattern response, length:', content?.length || 0);
+            console.log('[Analysis] Pattern response preview:', content?.substring(0, 500));
+
+            if (!content || content.trim() === '') {
+                console.warn('[Analysis] Empty pattern response');
+                return { structured: false, raw: 'No pattern analysis returned.' };
             }
 
-            // Return raw text if not JSON
+            // Remove markdown code blocks if present
+            let cleanContent = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+
+            // Try to extract JSON from the response
+            const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    console.log('[Analysis] Parsed pattern JSON:', parsed);
+
+                    // Check if we have any actual data
+                    const result = {
+                        structured: true,
+                        characterIntroduction: parsed.character_introduction || parsed.characterIntroduction || parsed.patterns?.character_introduction || [],
+                        sceneTransitions: parsed.scene_transitions || parsed.sceneTransitions || parsed.patterns?.scene_transitions || [],
+                        attentionalCues: parsed.attentional_cues || parsed.attentionalCues || parsed.patterns?.attentional_cues || [],
+                        narrativeRhythm: parsed.narrative_rhythm || parsed.narrativeRhythm || parsed.patterns?.narrative_rhythm || [],
+                        other: parsed.other || parsed.observations || parsed.summary || []
+                    };
+
+                    // If all arrays are empty but we have a patterns or analysis key, try to extract from there
+                    if (Object.values(result).every(v => !Array.isArray(v) || v.length === 0)) {
+                        if (parsed.patterns && typeof parsed.patterns === 'object') {
+                            Object.assign(result, parsed.patterns);
+                        }
+                        if (parsed.analysis && typeof parsed.analysis === 'string') {
+                            result.raw = parsed.analysis;
+                            result.structured = false;
+                        }
+                    }
+
+                    return result;
+                } catch (jsonError) {
+                    console.warn('[Analysis] JSON parse error:', jsonError.message);
+                }
+            }
+
+            // Return raw text if not JSON - this is still useful content
             return {
                 structured: false,
                 raw: content
             };
         } catch (error) {
-            console.error('Error parsing pattern response:', error);
+            console.error('[Analysis] Error parsing pattern response:', error);
             return {
                 structured: false,
                 raw: typeof response === 'string' ? response : JSON.stringify(response, null, 2)
