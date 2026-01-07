@@ -501,38 +501,42 @@ class APIClient {
         console.log('[API] detectCues called with text length:', text?.length || 0);
         console.log('[API] detectCues text preview:', text?.substring(0, 200));
 
-        const prompt = `Analyze this text segment from Mark's Gospel for attentional cues that direct readers to construct character models for background figures, particularly the Holy Spirit.
+        // Limit text length to avoid overwhelming smaller models
+        const maxTextLength = 2000;
+        const truncatedText = text.length > maxTextLength
+            ? text.substring(0, maxTextLength) + '...'
+            : text;
 
-Text: "${text}"
+        console.log('[API] Using text length:', truncatedText.length, '(truncated:', text.length > maxTextLength, ')');
 
-Look for these types of cues:
-1. Primacy effect: Early mentions that establish character importance
-2. Causal implication: Events attributed to off-stage characters
-3. Focalization shifts: Narrative perspective changes
-4. Conspicuous absence: Notable omissions or gaps
-5. Prolepsis: Forward references that anticipate character action
+        const prompt = `Analyze this Ancient Greek text from Mark's Gospel for attentional cues.
 
-For each cue found, provide:
-- Type of cue (use one of: primacy, causal, focalization, absence, prolepsis)
-- Location (word or phrase from the text)
-- Explanation of how it functions
-- Confidence score (0-1)
+Text: "${truncatedText}"
 
-IMPORTANT: Respond ONLY with valid JSON, no markdown formatting or additional text:
-{
-  "cues": [
-    {
-      "type": "cue_type",
-      "location": "specific_text",
-      "explanation": "how_it_works",
-      "confidence": 0.8
-    }
-  ]
-}`;
+Find these cue types:
+1. primacy: Early mentions establishing character importance
+2. causal: Events attributed to off-stage characters
+3. focalization: Narrative perspective changes
+4. absence: Notable omissions or gaps
+5. prolepsis: Forward references anticipating future action
 
-        console.log('[API] Sending cue detection request...');
+Return JSON only:
+{"cues":[{"type":"primacy","location":"word/phrase","explanation":"how it works","confidence":0.8}]}`;
+
+        console.log('[API] Sending cue detection request (prompt length:', prompt.length, ')...');
         const response = await this.makeRequest(prompt);
         console.log('[API] Raw response received:', JSON.stringify(response).substring(0, 500));
+
+        // Check for empty response
+        const content = response?.content || response?.choices?.[0]?.message?.content || '';
+        if (!content || content.trim() === '') {
+            console.error('[API] Model returned empty response. This may indicate:');
+            console.error('[API] - Model cannot handle the request (try a different model)');
+            console.error('[API] - Token limit exceeded');
+            console.error('[API] - Server-side filtering blocked the response');
+            throw new Error('Model returned empty response. Try a different model or check API configuration.');
+        }
+
         return this.parseCueResponse(response);
     }
 
@@ -544,19 +548,18 @@ IMPORTANT: Respond ONLY with valid JSON, no markdown formatting or additional te
      */
     async analyzeCharacters(characters, text) {
         const characterList = characters.map(c => c.name).join(', ');
-        const prompt = `Analyze the character relationships in this text segment from Mark's Gospel.
+        // Limit text length
+        const truncatedText = text.length > 1500 ? text.substring(0, 1500) + '...' : text;
 
-Characters mentioned: ${characterList}
+        const prompt = `Analyze character relationships in this Gospel of Mark passage.
 
-Text: "${text}"
+Characters: ${characterList}
+Text: "${truncatedText}"
 
-Identify:
-1. Direct interactions between characters
-2. Implicit relationships
-3. Power dynamics
-4. Narrative roles (protagonist, antagonist, background, etc.)
+Identify: interactions, relationships, power dynamics, narrative roles.
 
-Respond in JSON format with relationship analysis.`;
+Return JSON:
+{"relationships":[{"characters":["A","B"],"type":"interaction/implicit","description":"..."}],"roles":{"Jesus":"protagonist"}}`;
 
         return await this.makeRequest(prompt);
     }
@@ -569,24 +572,19 @@ Respond in JSON format with relationship analysis.`;
     async recognizePatterns(segments) {
         console.log('[API] recognizePatterns called with', segments?.length || 0, 'segments');
 
-        const prompt = `Analyze these narrative segments from Mark's Gospel for recurring patterns and narrative techniques.
+        // Limit to first 5 segments to reduce token count
+        const limitedSegments = segments.slice(0, 5);
+        const segmentText = limitedSegments.map(s => s.text).join(' | ');
+        const truncatedText = segmentText.length > 1500 ? segmentText.substring(0, 1500) + '...' : segmentText;
 
-Segments: ${segments.map(s => s.text).join('\n\n')}
+        const prompt = `Identify narrative patterns in these Gospel of Mark segments:
 
-Identify patterns in:
-1. Character introduction - how characters are first mentioned
-2. Scene transitions - how the narrative moves between locations/events
-3. Attentional cue distribution - where focus-directing elements appear
-4. Narrative rhythm - pacing and structural patterns
+"${truncatedText}"
 
-IMPORTANT: Respond ONLY with valid JSON, no markdown formatting:
-{
-  "character_introduction": ["pattern description 1", "pattern description 2"],
-  "scene_transitions": ["pattern description 1"],
-  "attentional_cues": ["observation 1"],
-  "narrative_rhythm": ["observation 1"],
-  "other": ["any additional observations"]
-}`;
+Patterns to find: character introductions, scene transitions, attentional cues, narrative rhythm.
+
+Return JSON:
+{"character_introduction":["pattern"],"scene_transitions":["pattern"],"attentional_cues":["observation"],"narrative_rhythm":["observation"]}`;
 
         return await this.makeRequest(prompt);
     }
@@ -700,6 +698,36 @@ IMPORTANT: Respond ONLY with valid JSON, no markdown formatting:
         } catch (error) {
             console.warn('API not available:', error.message);
             return false;
+        }
+    }
+
+    /**
+     * Test API with a simple request to verify model works
+     * Call this from browser console: apiClient.testApi()
+     * @returns {Promise<Object>} Test result
+     */
+    async testApi() {
+        console.log('[API Test] Testing API with simple request...');
+        console.log('[API Test] Provider:', this.currentProvider);
+        console.log('[API Test] Model:', this.currentModel);
+
+        try {
+            const response = await this.makeRequest('Reply with exactly: {"test":"success"}', { maxTokens: 50 });
+            const content = response?.content || response?.choices?.[0]?.message?.content || '';
+
+            console.log('[API Test] Response:', content);
+
+            if (!content || content.trim() === '') {
+                console.error('[API Test] FAILED - Model returned empty response');
+                console.error('[API Test] This model may not work for analysis. Try a different model.');
+                return { success: false, error: 'Empty response', content: '' };
+            }
+
+            console.log('[API Test] SUCCESS - Model is responding');
+            return { success: true, content };
+        } catch (error) {
+            console.error('[API Test] FAILED -', error.message);
+            return { success: false, error: error.message };
         }
     }
 
