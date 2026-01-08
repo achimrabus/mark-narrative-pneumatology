@@ -87,18 +87,79 @@ class APIClient {
     }
 
     /**
+     * Built-in presets for different model types
+     */
+    getPresets() {
+        return {
+            'standard': {
+                name: 'Standard Chat Model',
+                description: 'GPT-4, Claude, Llama, Mistral - balanced settings',
+                settings: {
+                    maxInputChars: 2000,
+                    maxTokens: 2000,
+                    temperature: 0.3,
+                    promptStyle: 'concise',
+                    retryOnEmpty: true,
+                    stripThinking: true
+                }
+            },
+            'reasoning': {
+                name: 'Reasoning Model (GLM, DeepSeek R1)',
+                description: 'Models that use <think> blocks - high tokens, short input',
+                settings: {
+                    maxInputChars: 1000,
+                    maxTokens: 6000,
+                    temperature: 0.3,
+                    promptStyle: 'concise',
+                    retryOnEmpty: true,
+                    stripThinking: true
+                }
+            },
+            'reasoning-detailed': {
+                name: 'Reasoning + Detailed Prompt',
+                description: 'For thorough analysis with reasoning models',
+                settings: {
+                    maxInputChars: 800,
+                    maxTokens: 8000,
+                    temperature: 0.2,
+                    promptStyle: 'detailed',
+                    retryOnEmpty: true,
+                    stripThinking: true
+                }
+            },
+            'fast': {
+                name: 'Fast/Small Model',
+                description: 'Smaller models, quick responses - minimal input',
+                settings: {
+                    maxInputChars: 1500,
+                    maxTokens: 1500,
+                    temperature: 0.2,
+                    promptStyle: 'concise',
+                    retryOnEmpty: true,
+                    stripThinking: false
+                }
+            },
+            'thorough': {
+                name: 'Thorough Analysis',
+                description: 'Maximum context for detailed analysis (GPT-4, Claude)',
+                settings: {
+                    maxInputChars: 4000,
+                    maxTokens: 4000,
+                    temperature: 0.4,
+                    promptStyle: 'detailed',
+                    retryOnEmpty: false,
+                    stripThinking: true
+                }
+            }
+        };
+    }
+
+    /**
      * Load analysis settings from localStorage
      * @returns {Object} Analysis settings
      */
     loadAnalysisSettings() {
-        const defaults = {
-            maxInputChars: 2000,      // Max characters to send to model
-            maxTokens: 2000,          // Max output tokens
-            temperature: 0.3,         // Lower = more deterministic
-            promptStyle: 'concise',   // 'concise' or 'detailed'
-            retryOnEmpty: true,       // Retry with shorter input on empty response
-            stripThinking: true       // Remove <think> blocks from response
-        };
+        const defaults = this.getPresets()['standard'].settings;
 
         try {
             const saved = localStorage.getItem('analysis_settings');
@@ -108,7 +169,7 @@ class APIClient {
         } catch (e) {
             console.warn('[API] Failed to load analysis settings:', e);
         }
-        return defaults;
+        return { ...defaults };
     }
 
     /**
@@ -810,24 +871,41 @@ Return JSON only (no thinking/reasoning):
     async showAdvancedSettings() {
         return new Promise((resolve) => {
             const settings = this.getAnalysisSettings();
+            const presets = this.getPresets();
+
+            // Build preset options HTML
+            const presetOptionsHtml = Object.entries(presets).map(([id, preset]) =>
+                `<option value="${id}">${preset.name}</option>`
+            ).join('');
 
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
             modal.innerHTML = `
                 <div class="modal-content api-config-modal">
                     <h3>Advanced Analysis Settings</h3>
-                    <p class="help-text">Tune these parameters if analysis fails or produces inconsistent results.</p>
+                    <p class="help-text">Tune parameters for different model types, or use a preset.</p>
+
+                    <div class="config-section preset-section">
+                        <label for="preset-select">Quick Presets:</label>
+                        <select id="preset-select">
+                            <option value="">-- Select a preset --</option>
+                            ${presetOptionsHtml}
+                        </select>
+                        <small id="preset-description" class="help-text">Choose a preset to auto-fill settings below</small>
+                    </div>
+
+                    <hr style="margin: 1rem 0; border: none; border-top: 1px solid #ddd;">
 
                     <div class="config-section">
                         <label for="max-input-chars">Max Input Characters:</label>
-                        <input type="number" id="max-input-chars" value="${settings.maxInputChars}" min="500" max="10000" step="500" />
-                        <small class="help-text">Reduce if model runs out of tokens during "thinking"</small>
+                        <input type="number" id="max-input-chars" value="${settings.maxInputChars}" min="500" max="10000" step="100" />
+                        <small class="help-text">Reduce for reasoning models (they use tokens on thinking)</small>
                     </div>
 
                     <div class="config-section">
                         <label for="max-tokens">Max Output Tokens:</label>
-                        <input type="number" id="max-tokens" value="${settings.maxTokens}" min="500" max="8000" step="500" />
-                        <small class="help-text">Increase if model runs out of tokens before producing JSON</small>
+                        <input type="number" id="max-tokens" value="${settings.maxTokens}" min="500" max="16000" step="500" />
+                        <small class="help-text">Increase for reasoning models (6000+ recommended)</small>
                     </div>
 
                     <div class="config-section">
@@ -840,9 +918,9 @@ Return JSON only (no thinking/reasoning):
                         <label for="prompt-style">Prompt Style:</label>
                         <select id="prompt-style">
                             <option value="concise" ${settings.promptStyle === 'concise' ? 'selected' : ''}>Concise (faster, less thinking)</option>
-                            <option value="detailed" ${settings.promptStyle === 'detailed' ? 'selected' : ''}>Detailed (more context, may trigger thinking)</option>
+                            <option value="detailed" ${settings.promptStyle === 'detailed' ? 'selected' : ''}>Detailed (more context, better explanations)</option>
                         </select>
-                        <small class="help-text">Concise works better with models that use &lt;think&gt; blocks</small>
+                        <small class="help-text">Concise works better with reasoning models</small>
                     </div>
 
                     <div class="config-section">
@@ -861,7 +939,6 @@ Return JSON only (no thinking/reasoning):
 
                     <div class="modal-buttons">
                         <button id="save-advanced-settings" class="btn btn-primary">Save Settings</button>
-                        <button id="reset-advanced-settings" class="btn btn-secondary">Reset to Defaults</button>
                         <button id="cancel-advanced-settings" class="btn btn-secondary">Cancel</button>
                     </div>
                 </div>
@@ -878,6 +955,30 @@ Return JSON only (no thinking/reasoning):
                 resolve(result);
             };
 
+            // Apply form values from settings object
+            const applySettings = (s) => {
+                document.getElementById('max-input-chars').value = s.maxInputChars;
+                document.getElementById('max-tokens').value = s.maxTokens;
+                document.getElementById('temperature').value = s.temperature;
+                document.getElementById('prompt-style').value = s.promptStyle;
+                document.getElementById('retry-on-empty').checked = s.retryOnEmpty;
+                document.getElementById('strip-thinking').checked = s.stripThinking;
+            };
+
+            // Handle preset selection
+            document.getElementById('preset-select').addEventListener('change', (e) => {
+                const presetId = e.target.value;
+                if (presetId && presets[presetId]) {
+                    const preset = presets[presetId];
+                    applySettings(preset.settings);
+                    document.getElementById('preset-description').textContent = preset.description;
+                    document.getElementById('preset-description').style.color = '#27ae60';
+                } else {
+                    document.getElementById('preset-description').textContent = 'Choose a preset to auto-fill settings below';
+                    document.getElementById('preset-description').style.color = '';
+                }
+            });
+
             document.getElementById('save-advanced-settings').addEventListener('click', () => {
                 const newSettings = {
                     maxInputChars: parseInt(document.getElementById('max-input-chars').value) || 2000,
@@ -889,15 +990,6 @@ Return JSON only (no thinking/reasoning):
                 };
                 this.saveAnalysisSettings(newSettings);
                 closeModal(newSettings);
-            });
-
-            document.getElementById('reset-advanced-settings').addEventListener('click', () => {
-                document.getElementById('max-input-chars').value = 2000;
-                document.getElementById('max-tokens').value = 2000;
-                document.getElementById('temperature').value = 0.3;
-                document.getElementById('prompt-style').value = 'concise';
-                document.getElementById('retry-on-empty').checked = true;
-                document.getElementById('strip-thinking').checked = true;
             });
 
             document.getElementById('cancel-advanced-settings').addEventListener('click', () => {

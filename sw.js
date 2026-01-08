@@ -1,5 +1,5 @@
 // Service Worker for Mark's Narrative Pneumatology PWA
-const CACHE_NAME = 'mark-pneumatology-v6';
+const CACHE_NAME = 'mark-pneumatology-v7';
 
 // Files to cache for offline use (relative paths for GitHub Pages compatibility)
 const STATIC_ASSETS = [
