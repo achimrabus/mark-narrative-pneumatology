@@ -43,6 +43,7 @@ class AnalysisPanel {
                 <h2>Narratological Analysis</h2>
                 <div class="analysis-controls">
                     <button id="run-analysis" class="btn-primary">Run Analysis</button>
+                    <button id="advanced-settings" class="btn-secondary" title="Tune analysis parameters">⚙️ Settings</button>
                     <button id="export-analysis" class="btn-secondary">Export Results</button>
                     <button id="clear-analysis" class="btn-secondary">Clear</button>
                 </div>
@@ -111,6 +112,12 @@ class AnalysisPanel {
         // Analysis controls
         document.getElementById('run-analysis').addEventListener('click', () => {
             this.runAnalysis();
+        });
+
+        document.getElementById('advanced-settings').addEventListener('click', () => {
+            if (window.apiClient) {
+                apiClient.showAdvancedSettings();
+            }
         });
 
         document.getElementById('export-analysis').addEventListener('click', () => {

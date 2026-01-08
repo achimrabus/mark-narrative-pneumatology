@@ -7,6 +7,9 @@
  */
 class APIClient {
     constructor() {
+        // Analysis settings (can be tweaked per model)
+        this.analysisSettings = this.loadAnalysisSettings();
+
         // Provider configurations with current models (Jan 2025)
         this.providers = {
             openwebui: {
@@ -81,6 +84,49 @@ class APIClient {
 
         // Check if API key is available
         this.apiKey = this.getApiKey();
+    }
+
+    /**
+     * Load analysis settings from localStorage
+     * @returns {Object} Analysis settings
+     */
+    loadAnalysisSettings() {
+        const defaults = {
+            maxInputChars: 2000,      // Max characters to send to model
+            maxTokens: 2000,          // Max output tokens
+            temperature: 0.3,         // Lower = more deterministic
+            promptStyle: 'concise',   // 'concise' or 'detailed'
+            retryOnEmpty: true,       // Retry with shorter input on empty response
+            stripThinking: true       // Remove <think> blocks from response
+        };
+
+        try {
+            const saved = localStorage.getItem('analysis_settings');
+            if (saved) {
+                return { ...defaults, ...JSON.parse(saved) };
+            }
+        } catch (e) {
+            console.warn('[API] Failed to load analysis settings:', e);
+        }
+        return defaults;
+    }
+
+    /**
+     * Save analysis settings to localStorage
+     * @param {Object} settings - Settings to save
+     */
+    saveAnalysisSettings(settings) {
+        this.analysisSettings = { ...this.analysisSettings, ...settings };
+        localStorage.setItem('analysis_settings', JSON.stringify(this.analysisSettings));
+        console.log('[API] Saved analysis settings:', this.analysisSettings);
+    }
+
+    /**
+     * Get current analysis settings
+     * @returns {Object} Current settings
+     */
+    getAnalysisSettings() {
+        return { ...this.analysisSettings };
     }
 
     /**
@@ -495,50 +541,84 @@ class APIClient {
     /**
      * Detect attentional cues in text
      * @param {string} text - Text to analyze
+     * @param {boolean} isRetry - Whether this is a retry attempt
      * @returns {Promise<Array>} Detected cues
      */
-    async detectCues(text) {
+    async detectCues(text, isRetry = false) {
+        const settings = this.analysisSettings;
         console.log('[API] detectCues called with text length:', text?.length || 0);
-        console.log('[API] detectCues text preview:', text?.substring(0, 200));
+        console.log('[API] Settings:', JSON.stringify(settings));
 
-        // Limit text length to avoid overwhelming smaller models
-        const maxTextLength = 2000;
+        // Limit text length based on settings (use smaller limit on retry)
+        const maxTextLength = isRetry ? Math.floor(settings.maxInputChars / 2) : settings.maxInputChars;
         const truncatedText = text.length > maxTextLength
             ? text.substring(0, maxTextLength) + '...'
             : text;
 
-        console.log('[API] Using text length:', truncatedText.length, '(truncated:', text.length > maxTextLength, ')');
+        console.log('[API] Using text length:', truncatedText.length, '(truncated:', text.length > maxTextLength, ', retry:', isRetry, ')');
 
-        const prompt = `Analyze this Ancient Greek text from Mark's Gospel for attentional cues.
+        // Build prompt based on style setting
+        let prompt;
+        if (settings.promptStyle === 'detailed') {
+            prompt = `You are a biblical narratology expert. Analyze this Ancient Greek text from Mark's Gospel for attentional cues that direct readers to construct character models.
 
 Text: "${truncatedText}"
 
-Find these cue types:
-1. primacy: Early mentions establishing character importance
-2. causal: Events attributed to off-stage characters
-3. focalization: Narrative perspective changes
-4. absence: Notable omissions or gaps
-5. prolepsis: Forward references anticipating future action
+Identify these types of attentional cues:
+1. primacy: Early mentions that establish character importance
+2. causal: Events attributed to off-stage characters (cause implied but actor not present)
+3. focalization: Shifts in narrative perspective or viewpoint
+4. absence: Notable omissions or gaps where something expected is missing
+5. prolepsis: Forward references that anticipate future action
 
-Return JSON only (no thinking/reasoning, no <think> tags):
-{"cues":[{"type":"primacy","location":"word/phrase","explanation":"how it works","confidence":0.8}]}`;
+For each cue found, provide:
+- type: One of the five cue types above
+- location: The specific Greek word or phrase
+- explanation: How this cue functions narratively
+- confidence: A score from 0 to 1
 
-        console.log('[API] Sending cue detection request (prompt length:', prompt.length, ')...');
-        // Use higher token limit for analysis (some models use many tokens for "thinking")
-        const response = await this.makeRequest(prompt, { maxTokens: 2000 });
+Respond with valid JSON only. Do not include any reasoning, thinking, or explanation outside the JSON:
+{"cues":[{"type":"primacy","location":"Greek text","explanation":"narrative function","confidence":0.8}]}`;
+        } else {
+            // Concise prompt (default) - less likely to trigger extended thinking
+            prompt = `Attentional cues in this Greek Gospel text:
+
+"${truncatedText}"
+
+Types: primacy (early importance), causal (off-stage attribution), focalization (perspective shift), absence (notable gap), prolepsis (forward reference).
+
+JSON only, no explanation:
+{"cues":[{"type":"TYPE","location":"GREEK","explanation":"FUNCTION","confidence":0.8}]}`;
+        }
+
+        console.log('[API] Sending cue detection request (prompt length:', prompt.length, ', maxTokens:', settings.maxTokens, ')...');
+
+        const response = await this.makeRequest(prompt, {
+            maxTokens: settings.maxTokens,
+            temperature: settings.temperature
+        });
         console.log('[API] Raw response received:', JSON.stringify(response).substring(0, 500));
 
         // Check for empty response
         const content = response?.content || response?.choices?.[0]?.message?.content || '';
         if (!content || content.trim() === '') {
-            console.error('[API] Model returned empty response. This may indicate:');
-            console.error('[API] - Model cannot handle the request (try a different model)');
-            console.error('[API] - Token limit exceeded');
-            console.error('[API] - Server-side filtering blocked the response');
-            throw new Error('Model returned empty response. Try a different model or check API configuration.');
+            if (settings.retryOnEmpty && !isRetry) {
+                console.warn('[API] Empty response, retrying with shorter input...');
+                return this.detectCues(text, true);
+            }
+            console.error('[API] Model returned empty response. Try adjusting settings or using a different model.');
+            throw new Error('Model returned empty response. Try adjusting Advanced Settings or using a different model.');
         }
 
-        return this.parseCueResponse(response);
+        const cues = this.parseCueResponse(response);
+
+        // If parsing failed and we haven't retried, try with shorter input
+        if (cues.length === 0 && settings.retryOnEmpty && !isRetry) {
+            console.warn('[API] No cues parsed, retrying with shorter input...');
+            return this.detectCues(text, true);
+        }
+
+        return cues;
     }
 
     /**
@@ -721,6 +801,120 @@ Return JSON only (no thinking/reasoning):
             console.warn('API not available:', error.message);
             return false;
         }
+    }
+
+    /**
+     * Show Advanced Settings dialog for tuning analysis parameters
+     * @returns {Promise<Object|null>} Updated settings or null if cancelled
+     */
+    async showAdvancedSettings() {
+        return new Promise((resolve) => {
+            const settings = this.getAnalysisSettings();
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content api-config-modal">
+                    <h3>Advanced Analysis Settings</h3>
+                    <p class="help-text">Tune these parameters if analysis fails or produces inconsistent results.</p>
+
+                    <div class="config-section">
+                        <label for="max-input-chars">Max Input Characters:</label>
+                        <input type="number" id="max-input-chars" value="${settings.maxInputChars}" min="500" max="10000" step="500" />
+                        <small class="help-text">Reduce if model runs out of tokens during "thinking"</small>
+                    </div>
+
+                    <div class="config-section">
+                        <label for="max-tokens">Max Output Tokens:</label>
+                        <input type="number" id="max-tokens" value="${settings.maxTokens}" min="500" max="8000" step="500" />
+                        <small class="help-text">Increase if model runs out of tokens before producing JSON</small>
+                    </div>
+
+                    <div class="config-section">
+                        <label for="temperature">Temperature:</label>
+                        <input type="number" id="temperature" value="${settings.temperature}" min="0" max="1" step="0.1" />
+                        <small class="help-text">Lower = more consistent, Higher = more creative</small>
+                    </div>
+
+                    <div class="config-section">
+                        <label for="prompt-style">Prompt Style:</label>
+                        <select id="prompt-style">
+                            <option value="concise" ${settings.promptStyle === 'concise' ? 'selected' : ''}>Concise (faster, less thinking)</option>
+                            <option value="detailed" ${settings.promptStyle === 'detailed' ? 'selected' : ''}>Detailed (more context, may trigger thinking)</option>
+                        </select>
+                        <small class="help-text">Concise works better with models that use &lt;think&gt; blocks</small>
+                    </div>
+
+                    <div class="config-section">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="retry-on-empty" ${settings.retryOnEmpty ? 'checked' : ''} />
+                            Retry with shorter input on failure
+                        </label>
+                    </div>
+
+                    <div class="config-section">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="strip-thinking" ${settings.stripThinking ? 'checked' : ''} />
+                            Strip &lt;think&gt; blocks from response
+                        </label>
+                    </div>
+
+                    <div class="modal-buttons">
+                        <button id="save-advanced-settings" class="btn btn-primary">Save Settings</button>
+                        <button id="reset-advanced-settings" class="btn btn-secondary">Reset to Defaults</button>
+                        <button id="cancel-advanced-settings" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+
+            const closeModal = (result = null) => {
+                document.body.style.overflow = '';
+                if (modal.parentNode) {
+                    document.body.removeChild(modal);
+                }
+                resolve(result);
+            };
+
+            document.getElementById('save-advanced-settings').addEventListener('click', () => {
+                const newSettings = {
+                    maxInputChars: parseInt(document.getElementById('max-input-chars').value) || 2000,
+                    maxTokens: parseInt(document.getElementById('max-tokens').value) || 2000,
+                    temperature: parseFloat(document.getElementById('temperature').value) || 0.3,
+                    promptStyle: document.getElementById('prompt-style').value,
+                    retryOnEmpty: document.getElementById('retry-on-empty').checked,
+                    stripThinking: document.getElementById('strip-thinking').checked
+                };
+                this.saveAnalysisSettings(newSettings);
+                closeModal(newSettings);
+            });
+
+            document.getElementById('reset-advanced-settings').addEventListener('click', () => {
+                document.getElementById('max-input-chars').value = 2000;
+                document.getElementById('max-tokens').value = 2000;
+                document.getElementById('temperature').value = 0.3;
+                document.getElementById('prompt-style').value = 'concise';
+                document.getElementById('retry-on-empty').checked = true;
+                document.getElementById('strip-thinking').checked = true;
+            });
+
+            document.getElementById('cancel-advanced-settings').addEventListener('click', () => {
+                closeModal(null);
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal(null);
+            });
+
+            document.addEventListener('keydown', function handler(e) {
+                if (e.key === 'Escape') {
+                    document.removeEventListener('keydown', handler);
+                    closeModal(null);
+                }
+            });
+        });
     }
 
     /**
