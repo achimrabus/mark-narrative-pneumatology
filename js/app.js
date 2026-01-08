@@ -174,6 +174,16 @@ class NarratologyApp {
             });
         }
 
+        // AI Settings button (global access from header)
+        const aiSettingsBtn = document.getElementById('ai-settings-btn');
+        if (aiSettingsBtn) {
+            aiSettingsBtn.addEventListener('click', () => {
+                if (window.apiClient) {
+                    apiClient.showAdvancedSettings();
+                }
+            });
+        }
+
         // Export buttons
         const exportBtn = document.getElementById('export-btn');
         if (exportBtn) {
